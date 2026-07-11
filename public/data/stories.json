@@ -1,0 +1,98 @@
+[
+  {
+    "id": "story-yangtze-bridge",
+    "bridgeId": "wuhan-yangtze-river-bridge",
+    "title": "从国家工程到城市日常",
+    "question": "它如何把“天堑变通途”转化为武汉人的日常生活？",
+    "fieldObservation": "桥头堡、观景平台和周边交通节点同时承载通勤、参观和城市记忆功能。",
+    "interviewQuote": "匿名访谈占位：小时候听长辈讲这座桥，现在过江已经是每天生活的一部分。",
+    "quoteConsent": "anonymous",
+    "analysis": "武汉长江大桥把国家工程能力、市民生活经验和城市形象连接在一起，是本项目最适合开篇的证据点。",
+    "ideologicalLink": "工程报国、社会主义建设、人民城市",
+    "evidenceLevel": "field + interview + document"
+  },
+  {
+    "id": "story-second-bridge",
+    "bridgeId": "wuhan-second-yangtze-river-bridge",
+    "title": "过江能力的网络化开端",
+    "question": "它如何把跨江通勤从稀缺能力变成城市日常？",
+    "fieldObservation": "长江二桥更适合从交通组织、车流分担和城市扩展角度观察。",
+    "interviewQuote": "匿名访谈占位：上班路线是否绕桥，直接影响一天的时间安排。",
+    "quoteConsent": "anonymous",
+    "analysis": "从一桥到二桥，武汉过江交通从标志性突破转向高频城市运行能力。",
+    "ideologicalLink": "交通治理、城市发展、民生便利",
+    "evidenceLevel": "document + field"
+  },
+  {
+    "id": "story-yingwuzhou",
+    "bridgeId": "yingwuzhou-yangtze-river-bridge",
+    "title": "老城片区的重新连接",
+    "question": "一座新桥如何重塑老城片区的可达性？",
+    "fieldObservation": "桥梁与快速路、公交和滨江空间共同影响周边片区的流动方式。",
+    "interviewQuote": "匿名访谈占位：以前说去对岸像跨城市，现在路线选择多了很多。",
+    "quoteConsent": "anonymous",
+    "analysis": "鹦鹉洲长江大桥适合作为城市更新与交通公平的案例。",
+    "ideologicalLink": "城市更新、公共服务均衡、人民城市",
+    "evidenceLevel": "field + document"
+  },
+  {
+    "id": "story-yangsigang",
+    "bridgeId": "yangsigang-yangtze-river-bridge",
+    "title": "从过江通勤到桥下公共空间",
+    "question": "桥梁除了通车，还给市民留下了什么公共生活空间？",
+    "fieldObservation": "桥下和近江空间可观察运动、休闲、通行与观景等多种使用方式。",
+    "interviewQuote": "匿名访谈占位：这里不仅是桥，也是散步、看江和活动的地方。",
+    "quoteConsent": "anonymous",
+    "analysis": "杨泗港长江大桥能把大型基础设施与日常公共生活联系起来，避免项目变成单纯工程介绍。",
+    "ideologicalLink": "人民城市、公共空间、民生获得感",
+    "evidenceLevel": "field + interview + document"
+  },
+  {
+    "id": "story-baishazhou",
+    "bridgeId": "baishazhou-yangtze-river-bridge",
+    "title": "城市南部的生产生活通道",
+    "question": "它如何服务城市南部片区和生产生活流动？",
+    "fieldObservation": "可围绕货运、通勤、沿线社区和南部组团发展整理观察材料。",
+    "interviewQuote": "匿名访谈占位：大桥让南部片区的跨江联系更直接。",
+    "quoteConsent": "anonymous",
+    "analysis": "白沙洲长江大桥适合承担产业联系和城市组团发展的分析任务。",
+    "ideologicalLink": "区域发展、产业联系、交通强国",
+    "evidenceLevel": "document + field"
+  },
+  {
+    "id": "story-tianxingzhou",
+    "bridgeId": "tianxingzhou-yangtze-river-bridge",
+    "title": "综合交通枢纽中的桥梁工程",
+    "question": "综合交通桥梁如何支撑国家铁路与城市交通协同？",
+    "fieldObservation": "该点位适合结合公开资料、铁路枢纽叙事和远眺观察进行材料组织。",
+    "interviewQuote": "匿名访谈占位：铁路桥让桥梁不只是城市内部交通，也连接更大的国家网络。",
+    "quoteConsent": "anonymous",
+    "analysis": "天兴洲长江大桥让项目从城市生活延展到综合交通体系和国家工程能力。",
+    "ideologicalLink": "交通强国、科技报国、综合交通",
+    "evidenceLevel": "document"
+  },
+  {
+    "id": "story-qingshan",
+    "bridgeId": "qingshan-yangtze-river-bridge",
+    "title": "外围通道与新城联动",
+    "question": "外围过江通道如何改变城市空间组织？",
+    "fieldObservation": "可观察东部新城联系、外环交通组织和区域协同叙事。",
+    "interviewQuote": "匿名访谈占位：新的过江通道改变了对城市边界的感受。",
+    "quoteConsent": "anonymous",
+    "analysis": "青山长江大桥适合放在时间轴后段，说明武汉桥梁群从中心过江走向区域网络。",
+    "ideologicalLink": "区域协同、新城建设、城市治理",
+    "evidenceLevel": "document"
+  },
+  {
+    "id": "story-qingchuan",
+    "bridgeId": "qingchuan-bridge",
+    "title": "汉江桥梁补足三镇叙事",
+    "question": "汉江桥梁如何补充长江桥梁之外的三镇联系叙事？",
+    "fieldObservation": "晴川桥周边具有汉江、龟山、晴川阁等复合城市景观，适合作为慢行观察节点。",
+    "interviewQuote": "匿名访谈占位：从这里看汉江两岸，更能理解武汉不是只有长江。",
+    "quoteConsent": "anonymous",
+    "analysis": "把汉江桥梁纳入地图，可以避免叙事只围绕长江展开，让三镇联系更完整。",
+    "ideologicalLink": "城市文脉、空间联系、青年 City Walk",
+    "evidenceLevel": "field + document"
+  }
+]

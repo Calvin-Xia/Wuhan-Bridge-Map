@@ -1,0 +1,65 @@
+{
+  "sampleSize": 86,
+  "familiarBridges": [
+    {
+      "label": "武汉长江大桥",
+      "value": 73
+    },
+    {
+      "label": "鹦鹉洲长江大桥",
+      "value": 34
+    },
+    {
+      "label": "杨泗港长江大桥",
+      "value": 28
+    },
+    {
+      "label": "长江二桥",
+      "value": 25
+    },
+    {
+      "label": "其他桥梁",
+      "value": 19
+    }
+  ],
+  "cognitionSources": [
+    {
+      "label": "日常通勤",
+      "value": 31
+    },
+    {
+      "label": "社交媒体",
+      "value": 24
+    },
+    {
+      "label": "课堂与资料",
+      "value": 18
+    },
+    {
+      "label": "城市游览",
+      "value": 13
+    }
+  ],
+  "developmentUnderstanding": [
+    {
+      "label": "交通便利",
+      "value": 67
+    },
+    {
+      "label": "城市记忆",
+      "value": 54
+    },
+    {
+      "label": "工程技术",
+      "value": 43
+    },
+    {
+      "label": "公共空间",
+      "value": 37
+    },
+    {
+      "label": "区域协同",
+      "value": 29
+    }
+  ]
+}

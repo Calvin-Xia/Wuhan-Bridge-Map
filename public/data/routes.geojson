@@ -1,0 +1,62 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [114.271, 30.567],
+          [114.288, 30.553],
+          [114.278, 30.528]
+        ]
+      },
+      "properties": {
+        "id": "route-memory",
+        "name": "城市记忆与三镇联系路线",
+        "day": "Day 1",
+        "mode": "City Walk + 公共交通",
+        "color": "#08768d",
+        "summary": "从汉江两岸到武汉长江大桥，观察桥梁如何进入城市记忆。"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [114.252, 30.507],
+          [114.272, 30.493],
+          [114.278, 30.528]
+        ]
+      },
+      "properties": {
+        "id": "route-public-space",
+        "name": "桥下空间与民生获得感路线",
+        "day": "Day 2",
+        "mode": "实地观察 + 访谈",
+        "color": "#2b8ba0",
+        "summary": "围绕南部过江通道，记录桥下空间、江滩活动和通勤体验。"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [114.333, 30.604],
+          [114.407, 30.644],
+          [114.493, 30.662]
+        ]
+      },
+      "properties": {
+        "id": "route-network",
+        "name": "综合交通与区域协同路线",
+        "day": "Day 3",
+        "mode": "资料核验 + 远眺观察",
+        "color": "#5aaabc",
+        "summary": "从长江二桥到青山长江大桥，理解过江通道网络化。"
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "source-yangtze-bridge",
+    "title": "武汉长江大桥公开资料",
+    "type": "document",
+    "access": "public",
+    "note": "用于核对建成年份、桥型和历史背景。"
+  },
+  {
+    "id": "source-yangsigang",
+    "title": "杨泗港长江大桥公开资料",
+    "type": "document",
+    "access": "public",
+    "note": "用于核对桥梁类型、开通时间和工程特点。"
+  },
+  {
+    "id": "source-bridge-catalog",
+    "title": "武汉桥梁基础资料汇总",
+    "type": "document",
+    "access": "public",
+    "note": "后续替换为政府网站、馆方材料或权威出版物的条目化索引。"
+  },
+  {
+    "id": "field-template",
+    "title": "实地观察记录模板",
+    "type": "field-note",
+    "access": "team-private",
+    "note": "公开地图只展示脱敏摘要，完整记录保存在 private-data。"
+  },
+  {
+    "id": "survey-summary",
+    "title": "青年桥梁认知问卷聚合结果",
+    "type": "survey",
+    "access": "aggregated",
+    "note": "仅展示聚合统计，不公开个人答卷。"
+  }
+]

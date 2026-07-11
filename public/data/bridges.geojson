@@ -1,0 +1,165 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.288, 30.553]
+      },
+      "properties": {
+        "id": "wuhan-yangtze-river-bridge",
+        "name": "武汉长江大桥",
+        "river": "长江",
+        "openedYear": 1957,
+        "bridgeType": "公铁两用桥",
+        "themeTags": ["工程报国", "城市记忆", "一五计划"],
+        "question": "它怎样把三镇联系从地理愿望变成日常生活？",
+        "shortStory": "新中国重要桥梁工程之一，改变三镇交通格局，也成为武汉城市记忆的核心符号。",
+        "researchStatus": "已实地调研",
+        "mediaIds": [],
+        "sourceIds": ["source-yangtze-bridge", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.333, 30.604]
+      },
+      "properties": {
+        "id": "wuhan-second-yangtze-river-bridge",
+        "name": "武汉长江二桥",
+        "river": "长江",
+        "openedYear": 1995,
+        "bridgeType": "公路桥",
+        "themeTags": ["快速过江", "城市扩展", "交通治理"],
+        "question": "它如何把跨江通勤从稀缺能力变成城市日常？",
+        "shortStory": "长江二桥强化了汉口与武昌之间的道路联系，见证武汉过江交通从单点突破走向网络化。",
+        "researchStatus": "待实地核验",
+        "mediaIds": [],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.278, 30.528]
+      },
+      "properties": {
+        "id": "yingwuzhou-yangtze-river-bridge",
+        "name": "鹦鹉洲长江大桥",
+        "river": "长江",
+        "openedYear": 2014,
+        "bridgeType": "悬索桥",
+        "themeTags": ["城市更新", "公共交通", "景观廊道"],
+        "question": "一座新桥如何重塑老城片区的可达性？",
+        "shortStory": "鹦鹉洲长江大桥把汉阳、武昌南部片区纳入更紧密的过江路网。",
+        "researchStatus": "待实地核验",
+        "mediaIds": [],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.272, 30.493]
+      },
+      "properties": {
+        "id": "yangsigang-yangtze-river-bridge",
+        "name": "杨泗港长江大桥",
+        "river": "长江",
+        "openedYear": 2019,
+        "bridgeType": "双层公路悬索桥",
+        "themeTags": ["双层交通", "桥下空间", "民生获得感"],
+        "question": "桥梁除了通车，还给市民留下了什么公共生活空间？",
+        "shortStory": "杨泗港长江大桥以双层通道组织过江交通，也让桥下空间、江滩活动与城市生活产生连接。",
+        "researchStatus": "已实地调研",
+        "mediaIds": [],
+        "sourceIds": ["source-yangsigang", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.252, 30.507]
+      },
+      "properties": {
+        "id": "baishazhou-yangtze-river-bridge",
+        "name": "白沙洲长江大桥",
+        "river": "长江",
+        "openedYear": 2000,
+        "bridgeType": "公路桥",
+        "themeTags": ["产业联系", "物流通道", "南部组团"],
+        "question": "它如何服务城市南部片区和生产生活流动？",
+        "shortStory": "白沙洲长江大桥强化武汉南部过江能力，是理解城市组团式发展的重要点位。",
+        "researchStatus": "资料整理中",
+        "mediaIds": [],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.407, 30.644]
+      },
+      "properties": {
+        "id": "tianxingzhou-yangtze-river-bridge",
+        "name": "天兴洲长江大桥",
+        "river": "长江",
+        "openedYear": 2009,
+        "bridgeType": "公铁两用斜拉桥",
+        "themeTags": ["铁路枢纽", "综合交通", "工程技术"],
+        "question": "综合交通桥梁如何支撑国家铁路与城市交通协同？",
+        "shortStory": "天兴洲长江大桥承载铁路与公路功能，是武汉综合交通枢纽叙事中的关键工程。",
+        "researchStatus": "资料整理中",
+        "mediaIds": [],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.493, 30.662]
+      },
+      "properties": {
+        "id": "qingshan-yangtze-river-bridge",
+        "name": "青山长江大桥",
+        "river": "长江",
+        "openedYear": 2019,
+        "bridgeType": "斜拉桥",
+        "themeTags": ["城市外环", "新城联动", "区域协同"],
+        "question": "外围过江通道如何改变城市空间组织？",
+        "shortStory": "青山长江大桥服务武汉东部交通组织，连接新城发展与区域协同。",
+        "researchStatus": "资料整理中",
+        "mediaIds": [],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.271, 30.567]
+      },
+      "properties": {
+        "id": "qingchuan-bridge",
+        "name": "晴川桥",
+        "river": "汉江",
+        "openedYear": 2000,
+        "bridgeType": "城市桥梁",
+        "themeTags": ["汉江两岸", "历史景观", "慢行观察"],
+        "question": "汉江桥梁如何补充长江桥梁之外的三镇联系叙事？",
+        "shortStory": "晴川桥连接汉阳与汉口滨江空间，适合作为青年 City Walk 中的观察节点。",
+        "researchStatus": "待实地核验",
+        "mediaIds": [],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    }
+  ]
+}

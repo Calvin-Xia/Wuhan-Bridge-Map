@@ -1,0 +1,84 @@
+---
+import "../styles/global.css";
+
+const title = "桥见江城：武汉桥梁群实践数字地图";
+const description = "从一桥一问看工程报国、城市治理与民生获得感";
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="map-stage page-enter" aria-label="武汉桥梁群地图">
+        <header class="map-header">
+          <p class="kicker">武汉桥梁群 · 大思政实践</p>
+          <h1>{title}</h1>
+          <p class="page-summary">{description}</p>
+          <dl class="metric-strip" aria-label="项目指标">
+            <div><dt>座桥</dt><dd><strong id="bridge-count">8</strong></dd></div>
+            <div><dt>条路线</dt><dd><strong>3</strong></dd></div>
+            <div><dt>类证据</dt><dd><strong>4</strong></dd></div>
+          </dl>
+        </header>
+
+        <section class="workspace" aria-label="桥梁地图工作区">
+          <aside class="story-rail" aria-label="桥梁调研内容">
+            <nav class="bridge-index" aria-label="桥梁目录">
+              <p class="section-label">一桥一问</p>
+              <ul id="bridge-list" class="bridge-list" aria-busy="true">
+                <li class="bridge-skeleton" aria-hidden="true"></li>
+                <li class="bridge-skeleton" aria-hidden="true"></li>
+                <li class="bridge-skeleton" aria-hidden="true"></li>
+              </ul>
+            </nav>
+
+            <article id="story-panel" class="story-panel" aria-live="polite">
+              <p class="section-label">当前点位</p>
+              <h2>数据载入中</h2>
+              <p>正在读取桥梁点位、故事卡片和资料索引。</p>
+            </article>
+          </aside>
+
+          <section class="map-column" aria-label="交互地图">
+            <div id="bridge-map" class="map-canvas"></div>
+            <p id="map-status" class="map-status">地图与点位数据载入中</p>
+          </section>
+        </section>
+      </section>
+
+      <section class="evidence-band" aria-label="问卷与调研证据">
+        <header class="evidence-heading reveal">
+          <p class="section-label">问卷快照</p>
+          <h2>青年认知、桥梁记忆与城市获得感</h2>
+        </header>
+        <section class="chart-grid" aria-label="问卷图表">
+          <figure class="chart-block reveal">
+            <figcaption>最熟悉的桥梁</figcaption>
+            <div id="chart-familiar" class="chart-canvas" role="img" aria-label="最熟悉桥梁柱状图"></div>
+          </figure>
+          <figure class="chart-block reveal">
+            <figcaption>认知来源</figcaption>
+            <div id="chart-sources" class="chart-canvas" role="img" aria-label="桥梁认知来源饼图"></div>
+          </figure>
+          <figure class="chart-block reveal">
+            <figcaption>城市发展理解</figcaption>
+            <div id="chart-understanding" class="chart-canvas" role="img" aria-label="城市发展理解柱状图"></div>
+          </figure>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      void Promise.all([import("../scripts/map-app"), import("../scripts/charts"), import("../scripts/reveal")]).catch((error) => {
+        console.error("Failed to load interactive modules", error);
+      });
+    </script>
+  </body>
+</html>

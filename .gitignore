@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+.env
+.env.*
+private-data/
+.playwright-mcp/
+wuhan-map-*.png
+npm-debug.log*
