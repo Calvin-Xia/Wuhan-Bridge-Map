@@ -24,6 +24,18 @@
     "evidenceLevel": "document + field"
   },
   {
+    "id": "story-erqi",
+    "bridgeId": "erqi-yangtze-river-bridge",
+    "title": "东部桥群中的资料整理节点",
+    "question": "二七长江大桥如何参与武汉东部跨江联系与城市扩展？",
+    "fieldObservation": "资料整理中占位：后续结合桥面通行、周边道路和江岸空间补充现场观察。",
+    "interviewQuote": "匿名访谈占位：待完成访谈后整理居民、通勤者和沿线使用者对这座桥的日常感受。",
+    "quoteConsent": "anonymous",
+    "analysis": "资料整理中占位：二七长江大桥可作为观察武汉桥梁群向东部延展、连接区域交通网络的案例，现阶段不替代实地调研结论。",
+    "ideologicalLink": "区域协同、交通发展、人民城市",
+    "evidenceLevel": "document + field pending"
+  },
+  {
     "id": "story-yingwuzhou",
     "bridgeId": "yingwuzhou-yangtze-river-bridge",
     "title": "老城片区的重新连接",

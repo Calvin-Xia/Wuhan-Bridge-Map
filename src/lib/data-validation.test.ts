@@ -1,9 +1,13 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   validateBridgeCollection,
   validateResearchDataset,
   type BridgeFeatureCollection,
   type ResearchDataset,
+  type RouteFeatureCollection,
+  type SourceRecord,
+  type StoryRecord,
 } from "./data-validation";
 
 const validBridges: BridgeFeatureCollection = {
@@ -58,6 +62,21 @@ const validDataset: ResearchDataset = {
   ],
 };
 
+const productionDataset: ResearchDataset = {
+  bridges: JSON.parse(
+    readFileSync(new URL("../../public/data/bridges.geojson", import.meta.url), "utf8"),
+  ) as BridgeFeatureCollection,
+  routes: JSON.parse(
+    readFileSync(new URL("../../public/data/routes.geojson", import.meta.url), "utf8"),
+  ) as RouteFeatureCollection,
+  stories: JSON.parse(
+    readFileSync(new URL("../../public/data/stories.json", import.meta.url), "utf8"),
+  ) as StoryRecord[],
+  sources: JSON.parse(
+    readFileSync(new URL("../../public/data/sources.json", import.meta.url), "utf8"),
+  ) as SourceRecord[],
+};
+
 describe("validateBridgeCollection", () => {
   it("accepts bridge point features with required research fields", () => {
     expect(validateBridgeCollection(validBridges)).toEqual([]);
@@ -105,5 +124,9 @@ describe("validateResearchDataset", () => {
     expect(validateResearchDataset(dataset)).toContain(
       "stories[0].bridgeId references unknown bridge: missing-bridge",
     );
+  });
+
+  it("accepts the full production dataset including the bridge chain", () => {
+    expect(validateResearchDataset(productionDataset)).toEqual([]);
   });
 });

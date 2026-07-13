@@ -6,13 +6,31 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <script is:inline>
+      (() => {
+        let storedTheme = null;
+
+        try {
+          storedTheme = window.localStorage.getItem("wuhan-bridge-map-theme");
+        } catch {
+          storedTheme = null;
+        }
+
+        const savedTheme = storedTheme === "light" || storedTheme === "dark" ? storedTheme : null;
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const theme = savedTheme ?? systemTheme;
+
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
   </head>
   <body>
     <main class="app-shell">
@@ -21,11 +39,22 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
           <p class="kicker">武汉桥梁群 · 大思政实践</p>
           <h1>{title}</h1>
           <p class="page-summary">{description}</p>
-          <dl class="metric-strip" aria-label="项目指标">
-            <div><dt>座桥</dt><dd><strong id="bridge-count">8</strong></dd></div>
-            <div><dt>条路线</dt><dd><strong>3</strong></dd></div>
-            <div><dt>类证据</dt><dd><strong>4</strong></dd></div>
-          </dl>
+          <div class="header-side">
+            <dl class="metric-strip" aria-label="项目指标">
+              <div><dt>座桥</dt><dd><strong id="bridge-count">9</strong></dd><small class="metric-code">BRIDGES</small></div>
+              <div><dt>条路线</dt><dd><strong>4</strong></dd><small class="metric-code">ROUTES</small></div>
+              <div><dt>类证据</dt><dd><strong>4</strong></dd><small class="metric-code">EVIDENCE</small></div>
+            </dl>
+            <button
+              id="theme-toggle"
+              class="theme-toggle"
+              type="button"
+              aria-pressed="false"
+              aria-label="切换到暗夜主题"
+            >
+              <span class="theme-toggle-label" data-theme-toggle-label>暗夜</span>
+            </button>
+          </div>
         </header>
 
         <section class="workspace" aria-label="桥梁地图工作区">
@@ -48,7 +77,7 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
 
           <section class="map-column" aria-label="交互地图">
             <div id="bridge-map" class="map-canvas"></div>
-            <p id="map-status" class="map-status">地图与点位数据载入中</p>
+            <p id="map-status" class="map-status" role="status">地图与点位数据载入中</p>
           </section>
         </section>
       </section>
@@ -60,15 +89,30 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
         </header>
         <section class="chart-grid" aria-label="问卷图表">
           <figure class="chart-block reveal">
-            <figcaption>最熟悉的桥梁</figcaption>
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><path d="M5 19V9m7 10V5m7 14v-7" /></svg>
+              </span>
+              <span>最熟悉的桥梁</span>
+            </figcaption>
             <div id="chart-familiar" class="chart-canvas" role="img" aria-label="最熟悉桥梁柱状图"></div>
           </figure>
           <figure class="chart-block reveal">
-            <figcaption>认知来源</figcaption>
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><path d="M12 3a9 9 0 1 0 9 9h-9V3Z" /><path d="M15 3.5A9 9 0 0 1 20.5 9H15V3.5Z" /></svg>
+              </span>
+              <span>认知来源</span>
+            </figcaption>
             <div id="chart-sources" class="chart-canvas" role="img" aria-label="桥梁认知来源饼图"></div>
           </figure>
           <figure class="chart-block reveal">
-            <figcaption>城市发展理解</figcaption>
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><path d="m4 16 5-5 4 3 7-8M4 20h16" /></svg>
+              </span>
+              <span>城市发展理解</span>
+            </figcaption>
             <div id="chart-understanding" class="chart-canvas" role="img" aria-label="城市发展理解柱状图"></div>
           </figure>
         </section>
@@ -76,7 +120,10 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
     </main>
 
     <script>
-      void Promise.all([import("../scripts/map-app"), import("../scripts/charts"), import("../scripts/reveal")]).catch((error) => {
+      void (async () => {
+        await import("../scripts/theme");
+        await Promise.all([import("../scripts/map-app"), import("../scripts/charts"), import("../scripts/reveal")]);
+      })().catch((error) => {
         console.error("Failed to load interactive modules", error);
       });
     </script>

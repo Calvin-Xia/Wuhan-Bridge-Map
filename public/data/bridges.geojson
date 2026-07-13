@@ -5,7 +5,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.288, 30.553]
+        "coordinates": [114.28201, 30.55262]
       },
       "properties": {
         "id": "wuhan-yangtze-river-bridge",
@@ -25,7 +25,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.333, 30.604]
+        "coordinates": [114.32049, 30.60472]
       },
       "properties": {
         "id": "wuhan-second-yangtze-river-bridge",
@@ -45,7 +45,27 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.278, 30.528]
+        "coordinates": [114.33987, 30.62914]
+      },
+      "properties": {
+        "id": "erqi-yangtze-river-bridge",
+        "name": "二七长江大桥",
+        "river": "长江",
+        "openedYear": 2011,
+        "bridgeType": "公路桥",
+        "themeTags": ["区域协同", "东部联动", "桥梁网络"],
+        "question": "二七长江大桥如何参与武汉东部跨江联系与城市扩展？",
+        "shortStory": "资料整理中占位：二七长江大桥可作为观察武汉桥梁群向东部延展的节点，待后续核对公开资料与现场材料。",
+        "researchStatus": "资料整理中",
+        "mediaIds": ["photo-erqi-placeholder"],
+        "sourceIds": ["source-bridge-catalog", "field-template"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.27685, 30.53403]
       },
       "properties": {
         "id": "yingwuzhou-yangtze-river-bridge",
@@ -65,7 +85,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.272, 30.493]
+        "coordinates": [114.25637, 30.51026]
       },
       "properties": {
         "id": "yangsigang-yangtze-river-bridge",
@@ -85,7 +105,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.252, 30.507]
+        "coordinates": [114.23831, 30.48868]
       },
       "properties": {
         "id": "baishazhou-yangtze-river-bridge",
@@ -105,7 +125,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.407, 30.644]
+        "coordinates": [114.39302, 30.66807]
       },
       "properties": {
         "id": "tianxingzhou-yangtze-river-bridge",
@@ -125,7 +145,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.493, 30.662]
+        "coordinates": [114.4667, 30.6797]
       },
       "properties": {
         "id": "qingshan-yangtze-river-bridge",
@@ -145,7 +165,7 @@
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [114.271, 30.567]
+        "coordinates": [114.279, 30.5661]
       },
       "properties": {
         "id": "qingchuan-bridge",

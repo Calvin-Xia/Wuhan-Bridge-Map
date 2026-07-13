@@ -1,3 +1,5 @@
+import { validateBridgeChain } from "./bridge-chain";
+
 export type Coordinate = [number, number];
 
 export type ResearchStatus = "已实地调研" | "待实地核验" | "资料整理中";
@@ -202,6 +204,11 @@ export function validateResearchDataset(dataset: ResearchDataset): string[] {
     ...(dataset.routes ? validateRouteCollection(dataset.routes) : []),
     ...(dataset.survey ? validateSurveySummary(dataset.survey) : []),
   ];
+
+  if (dataset.routes) {
+    issues.push(...validateBridgeChain(dataset.bridges, dataset.routes));
+  }
+
   const bridgeIds = new Set(dataset.bridges.features.map((feature) => feature.properties.id));
   const sourceIds = new Set(dataset.sources.map((source) => source.id));
 

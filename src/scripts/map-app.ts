@@ -10,6 +10,13 @@ import type {
 } from "../lib/data-validation";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { INITIAL_MAP_VIEW } from "../lib/map-view";
+import {
+  createBridgeMapLayers,
+  DARK_MAP_THEME,
+  LIGHT_MAP_THEME,
+  type MapLayerTheme,
+} from "../lib/map-layer-spec";
+import { isThemeMode, THEME_CHANGE_EVENT, type ThemeMode } from "../lib/theme-preferences";
 
 const STUDY_AREA_BOUNDS: LngLatBoundsLike = [
   [114.15, 30.4],
@@ -17,40 +24,6 @@ const STUDY_AREA_BOUNDS: LngLatBoundsLike = [
 ];
 const OSM_ATTRIBUTION =
   '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">&copy; OpenStreetMap contributors</a>';
-const OSM_RASTER_STYLE: StyleSpecification = {
-  version: 8,
-  name: "Wuhan bridge study area OSM raster",
-  sources: {
-    "osm-raster": {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      minzoom: 0,
-      maxzoom: 19,
-      attribution: OSM_ATTRIBUTION,
-    },
-  },
-  layers: [
-    {
-      id: "map-background",
-      type: "background",
-      paint: {
-        "background-color": "#d9e3df",
-      },
-    },
-    {
-      id: "osm-raster",
-      type: "raster",
-      source: "osm-raster",
-      paint: {
-        "raster-opacity": 0.96,
-        "raster-saturation": -0.12,
-        "raster-contrast": 0.04,
-      },
-    },
-  ],
-};
-
 const state = {
   activeBridgeId: "",
   bridges: [] as BridgeFeature[],
@@ -59,6 +32,12 @@ const state = {
   labelMarkers: [] as maplibregl.Marker[],
   map: null as maplibregl.Map | null,
 };
+
+window.addEventListener(THEME_CHANGE_EVENT, (event) => {
+  const detail = (event as CustomEvent<{ mode?: unknown }>).detail;
+  const mode = isThemeMode(detail?.mode) ? detail.mode : getDocumentTheme();
+  applyMapTheme(mode);
+});
 
 void initMapApp();
 
@@ -93,9 +72,10 @@ async function initMapApp() {
 
 function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollection) {
   const status = byId("map-status");
+  const theme = getMapTheme(getDocumentTheme());
   const map = new maplibregl.Map({
     container: "bridge-map",
-    style: OSM_RASTER_STYLE,
+    style: createOsmRasterStyle(theme),
     center: INITIAL_MAP_VIEW.center,
     zoom: INITIAL_MAP_VIEW.zoom,
     minZoom: 9.1,
@@ -115,52 +95,16 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
       data: routes,
     });
 
-    map.addLayer({
-      id: "research-routes",
-      type: "line",
-      source: "routes",
-      paint: {
-        "line-color": ["get", "color"],
-        "line-width": 4,
-        "line-opacity": 0.82,
-      },
-    });
-
     map.addSource("bridges", {
       type: "geojson",
       data: bridges,
     });
 
-    map.addLayer({
-      id: "bridge-points-halo",
-      type: "circle",
-      source: "bridges",
-      paint: {
-        "circle-radius": 14,
-        "circle-color": "#edf1ed",
-        "circle-opacity": 0.88,
-      },
-    });
+    for (const layer of createBridgeMapLayers(theme)) {
+      map.addLayer(layer);
+    }
 
-    map.addLayer({
-      id: "bridge-points",
-      type: "circle",
-      source: "bridges",
-      paint: {
-        "circle-radius": 7,
-        "circle-color": [
-          "match",
-          ["get", "researchStatus"],
-          "已实地调研",
-          "#cf6245",
-          "待实地核验",
-          "#9f7741",
-          "#08768d",
-        ],
-        "circle-stroke-color": "#0f1a17",
-        "circle-stroke-width": 1.5,
-      },
-    });
+    applyMapTheme(getDocumentTheme());
 
     renderBridgeMapLabels();
 
@@ -184,6 +128,80 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
   map.on("error", () => {
     status.textContent = "底图暂时不可用，桥梁列表和故事卡片仍可使用。";
   });
+}
+
+function createOsmRasterStyle(theme: MapLayerTheme): StyleSpecification {
+  return {
+    version: 8,
+    name: "Wuhan bridge study area OSM raster",
+    sources: {
+      "osm-raster": {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        minzoom: 0,
+        maxzoom: 19,
+        attribution: OSM_ATTRIBUTION,
+      },
+    },
+    layers: [
+      {
+        id: "map-background",
+        type: "background",
+        paint: {
+          "background-color": theme.background,
+        },
+      },
+      {
+        id: "osm-raster",
+        type: "raster",
+        source: "osm-raster",
+        paint: {
+          "raster-opacity": theme.rasterOpacity,
+          "raster-saturation": theme.rasterSaturation,
+          "raster-contrast": theme.rasterContrast,
+          "raster-brightness-min": theme.rasterBrightnessMin,
+          "raster-brightness-max": theme.rasterBrightnessMax,
+        },
+      },
+    ],
+  };
+}
+
+function applyMapTheme(mode: ThemeMode) {
+  const map = state.map;
+  if (!map || !map.isStyleLoaded()) return;
+
+  const theme = getMapTheme(mode);
+  setPaintPropertyIfPresent(map, "map-background", "background-color", theme.background);
+  setPaintPropertyIfPresent(map, "osm-raster", "raster-opacity", theme.rasterOpacity);
+  setPaintPropertyIfPresent(map, "osm-raster", "raster-saturation", theme.rasterSaturation);
+  setPaintPropertyIfPresent(map, "osm-raster", "raster-contrast", theme.rasterContrast);
+  setPaintPropertyIfPresent(map, "osm-raster", "raster-brightness-min", theme.rasterBrightnessMin);
+  setPaintPropertyIfPresent(map, "osm-raster", "raster-brightness-max", theme.rasterBrightnessMax);
+  setPaintPropertyIfPresent(map, "bridge-chain-halo", "line-color", theme.chainHalo);
+  setPaintPropertyIfPresent(map, "bridge-points-halo", "circle-color", theme.pointHalo);
+  setPaintPropertyIfPresent(map, "bridge-points", "circle-stroke-color", theme.pointStroke);
+}
+
+function setPaintPropertyIfPresent(
+  map: maplibregl.Map,
+  layerId: string,
+  property: string,
+  value: string | number,
+) {
+  if (map.getLayer(layerId)) {
+    map.setPaintProperty(layerId, property, value);
+  }
+}
+
+function getDocumentTheme(): ThemeMode {
+  const theme = document.documentElement.dataset.theme;
+  return isThemeMode(theme) ? theme : "light";
+}
+
+function getMapTheme(mode: ThemeMode): MapLayerTheme {
+  return mode === "dark" ? DARK_MAP_THEME : LIGHT_MAP_THEME;
 }
 
 function renderBridgeList() {

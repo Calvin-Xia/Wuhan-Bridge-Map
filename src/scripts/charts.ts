@@ -4,17 +4,16 @@ import {
   GridComponent,
   LegendComponent,
   TooltipComponent,
-  type TooltipComponentOption,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
-import type { ComposeOption, ECharts } from "echarts/core";
-import type { BarSeriesOption, PieSeriesOption } from "echarts/charts";
-import type { GridComponentOption, LegendComponentOption } from "echarts/components";
+import type { ECharts } from "echarts/core";
 import type { SurveyMetric, SurveySummary } from "../lib/data-validation";
-
-type ChartOption = ComposeOption<
-  BarSeriesOption | PieSeriesOption | GridComponentOption | LegendComponentOption | TooltipComponentOption
->;
+import {
+  createBarChartOption,
+  createPieChartOption,
+  type ChartTheme,
+} from "../lib/chart-options";
+import { THEME_CHANGE_EVENT } from "../lib/theme-preferences";
 
 echarts.use([BarChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
 
@@ -24,112 +23,53 @@ async function initCharts() {
   const survey = await fetchJson<SurveySummary>("/data/survey-summary.json");
   const theme = readTheme();
   const charts = [
-    mountBarChart("chart-familiar", survey.familiarBridges, theme.accent),
+    mountBarChart("chart-familiar", survey.familiarBridges, "accent", theme),
     mountPieChart("chart-sources", survey.cognitionSources, theme),
-    mountBarChart("chart-understanding", survey.developmentUnderstanding, theme.evidence),
-  ].filter((chart): chart is ECharts => Boolean(chart));
+    mountBarChart("chart-understanding", survey.developmentUnderstanding, "evidence", theme),
+  ].filter((chart): chart is ChartBinding => Boolean(chart));
 
   window.addEventListener("resize", () => {
-    for (const chart of charts) {
-      chart.resize();
+    for (const binding of charts) {
+      binding.chart.resize();
+    }
+  });
+
+  window.addEventListener(THEME_CHANGE_EVENT, () => {
+    const nextTheme = readTheme();
+    for (const binding of charts) {
+      binding.chart.setOption(binding.getOption(nextTheme), true);
     }
   });
 }
 
-function mountBarChart(id: string, data: SurveyMetric[], color: string): ECharts | null {
+type ChartBinding = {
+  chart: ECharts;
+  getOption: (theme: ChartTheme) => ReturnType<typeof createBarChartOption>;
+};
+
+type BarTone = "accent" | "evidence";
+
+function mountBarChart(id: string, data: SurveyMetric[], tone: BarTone, theme: ChartTheme): ChartBinding | null {
   const element = document.getElementById(id);
   if (!element) return null;
 
   const chart = echarts.init(element);
-  const theme = readTheme();
-  const option: ChartOption = {
-    animation: false,
-    color: [color],
-    tooltip: {
-      trigger: "axis",
-    },
-    grid: {
-      top: 22,
-      right: 10,
-      bottom: 56,
-      left: 36,
-    },
-    xAxis: {
-      type: "category",
-      data: data.map((item) => item.label),
-      axisLabel: {
-        interval: 0,
-        rotate: 28,
-        color: theme.muted,
-      },
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: {
-        color: theme.muted,
-      },
-      splitLine: {
-        lineStyle: {
-          color: theme.line,
-        },
-      },
-    },
-    series: [
-      {
-        type: "bar",
-        data: data.map((item) => item.value),
-        barMaxWidth: 34,
-        itemStyle: {
-          borderRadius: [4, 4, 0, 0],
-        },
-      },
-    ],
-  };
+  const getOption = (nextTheme: ChartTheme) =>
+    createBarChartOption(data, tone === "accent" ? nextTheme.accent : nextTheme.evidence, nextTheme);
 
-  chart.setOption(option);
-  return chart;
+  chart.setOption(getOption(theme));
+  return { chart, getOption };
 }
 
-function mountPieChart(id: string, data: SurveyMetric[], theme: ChartTheme): ECharts | null {
+function mountPieChart(id: string, data: SurveyMetric[], theme: ChartTheme): ChartBinding | null {
   const element = document.getElementById(id);
   if (!element) return null;
 
   const chart = echarts.init(element);
-  const option: ChartOption = {
-    animation: false,
-    color: theme.chartTones,
-    tooltip: {
-      trigger: "item",
-    },
-    legend: {
-      bottom: 0,
-      left: "center",
-      itemWidth: 10,
-      itemHeight: 10,
-      textStyle: {
-        color: theme.muted,
-      },
-    },
-    series: [
-      {
-        type: "pie",
-        radius: ["42%", "68%"],
-        center: ["50%", "43%"],
-        avoidLabelOverlap: true,
-        label: {
-          formatter: "{b}\n{d}%",
-          color: theme.ink,
-        },
-        data: data.map((item) => ({
-          name: item.label,
-          value: item.value,
-        })),
-      },
-    ],
-  };
+  const getOption = (nextTheme: ChartTheme) => createPieChartOption(data, nextTheme);
 
-  chart.setOption(option);
-  return chart;
+  chart.setOption(getOption(theme));
+  return { chart, getOption };
 }
 
 async function fetchJson<T>(path: string): Promise<T> {
@@ -138,15 +78,6 @@ async function fetchJson<T>(path: string): Promise<T> {
     throw new Error(`Failed to fetch ${path}: ${response.status}`);
   }
   return response.json() as Promise<T>;
-}
-
-interface ChartTheme {
-  accent: string;
-  chartTones: string[];
-  evidence: string;
-  ink: string;
-  line: string;
-  muted: string;
 }
 
 function readTheme(): ChartTheme {

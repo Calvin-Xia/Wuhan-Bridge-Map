@@ -1,8 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --bg: #edf1ed;
   --surface: #f7f8f4;
   --surface-alt: #e1e8e4;
@@ -10,6 +10,7 @@
   --map-wash: #d9e3df;
   --border: #c6d0ca;
   --border-strong: #9fb0a9;
+  --border-hover: #08768d;
   --text: #17231f;
   --text-strong: #0f1a17;
   --text-secondary: #65736e;
@@ -30,10 +31,11 @@
   --accent-rgb: 8, 118, 141;
   --radius: 8px;
   --font-sans: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  --font-number: "Roboto Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme="dark"] {
+  color-scheme: dark;
     --bg: #101916;
     --surface: #17231f;
     --surface-alt: #20302b;
@@ -41,6 +43,7 @@
     --map-wash: #20302b;
     --border: #31443d;
     --border-strong: #4b625a;
+    --border-hover: #63bec7;
     --text: #edf4ef;
     --text-strong: #f8fbf7;
     --text-secondary: #a9b8b2;
@@ -59,7 +62,6 @@
     --surface-rgb: 23, 35, 31;
     --text-rgb: 237, 244, 239;
     --accent-rgb: 78, 180, 193;
-  }
 }
 
 * {
@@ -131,9 +133,9 @@ button:focus-visible {
 .map-header {
   display: grid;
   grid-template-areas:
-    "kicker metrics"
-    "title metrics"
-    "summary metrics";
+    "kicker side"
+    "title side"
+    "summary side";
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
   gap: 0.45rem clamp(1.25rem, 3vw, 3rem);
   align-items: end;
@@ -178,8 +180,15 @@ button:focus-visible {
   line-height: 1.75;
 }
 
+.header-side {
+  grid-area: side;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1rem;
+}
+
 .metric-strip {
-  grid-area: metrics;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
@@ -215,14 +224,57 @@ button:focus-visible {
 
 .metric-strip strong {
   color: var(--text-strong);
+  font-family: var(--font-number);
   font-size: clamp(1.7rem, 3vw, 2.25rem);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
   line-height: 1;
+}
+
+.metric-code {
+  order: 3;
+  color: var(--text-tertiary);
+  font-family: var(--font-number);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+}
+
+.theme-toggle {
+  min-width: 5rem;
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  color: var(--text-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent-hover);
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.theme-toggle:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+  grid-template-columns: minmax(22rem, 0.72fr) minmax(0, 1fr);
   gap: clamp(0.75rem, 1.5vw, 1.25rem);
   min-height: 0;
   min-width: 0;
@@ -467,12 +519,51 @@ button:focus-visible {
 }
 
 .maplibregl-ctrl-attrib {
+  padding: 0.25rem 0.45rem;
   color: var(--text-secondary);
+  background: rgb(var(--surface-rgb) / 0.9);
+  border: 1px solid var(--border);
   border-top-left-radius: var(--radius);
 }
 
 .maplibregl-ctrl-attrib a {
   color: var(--accent-hover);
+}
+
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 18px rgb(var(--text-rgb) / 0.12) !important;
+}
+
+.maplibregl-ctrl-group button {
+  width: 44px;
+  height: 44px;
+  background-color: var(--surface) !important;
+  border-block-end: 1px solid var(--border);
+}
+
+.maplibregl-ctrl-group button:last-child {
+  border-block-end: 0;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+.maplibregl-ctrl-group button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.maplibregl-ctrl-group .maplibregl-ctrl-icon {
+  filter: none;
+}
+
+:root[data-theme="dark"] .maplibregl-ctrl-group .maplibregl-ctrl-icon {
+  filter: invert(0.86);
 }
 
 .maplibregl-popup-content {
@@ -482,6 +573,11 @@ button:focus-visible {
   border-radius: var(--radius);
   box-shadow: 0 16px 38px rgb(var(--text-rgb) / 0.12);
   font-family: var(--font-sans);
+}
+
+.maplibregl-popup-tip {
+  border-top-color: var(--surface);
+  border-bottom-color: var(--surface);
 }
 
 .popup-title {
@@ -516,7 +612,7 @@ button:focus-visible {
 
 .chart-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.9fr) minmax(0, 1.05fr);
   gap: clamp(1.25rem, 3vw, 2.5rem);
 }
 
@@ -527,16 +623,41 @@ button:focus-visible {
 }
 
 .chart-block + .chart-block {
-  padding-inline-start: clamp(1.25rem, 3vw, 2.5rem);
+  padding-inline-start: clamp(0.75rem, 2vw, 1.5rem);
   border-inline-start: 1px solid var(--border);
 }
 
 .chart-block figcaption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-block-end: 0.6rem;
   color: var(--text-strong);
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.chart-icon {
+  display: inline-grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+}
+
+.chart-icon svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .chart-canvas {
@@ -547,7 +668,7 @@ button:focus-visible {
 
 @media (min-width: 981px) {
   .workspace {
-    height: clamp(32rem, 56vh, 38rem);
+    height: clamp(28rem, 48vh, 34rem);
   }
 
   .story-rail {
@@ -578,6 +699,10 @@ button:focus-visible {
   .bridge-skeleton {
     animation: skeleton-scan 1.4s linear infinite;
   }
+
+  .reveal.is-visible .chart-icon {
+    animation: chart-icon-pop 540ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
+  }
 }
 
 @keyframes page-enter {
@@ -599,6 +724,23 @@ button:focus-visible {
 
   to {
     background-position: -60% 0;
+  }
+}
+
+@keyframes chart-icon-pop {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.76) rotate(-5deg);
+  }
+
+  65% {
+    opacity: 1;
+    transform: scale(1.12) rotate(2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
   }
 }
 
@@ -628,12 +770,12 @@ button:focus-visible {
       "kicker"
       "title"
       "summary"
-      "metrics";
+      "side";
     grid-template-columns: 1fr;
   }
 
-  .metric-strip {
-    max-width: 32rem;
+  .header-side {
+    grid-template-columns: minmax(0, 1fr) auto;
     margin-block-start: 0.6rem;
   }
 
@@ -688,6 +830,15 @@ button:focus-visible {
 
   .metric-strip strong {
     font-size: 1.55rem;
+  }
+
+  .header-side {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .theme-toggle {
+    justify-self: end;
   }
 
   .bridge-list {
