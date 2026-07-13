@@ -69,18 +69,19 @@
 - 江蓝是唯一交互强调色，用于选中、链接、键盘焦点和可操作控件。
 - 橙褐仅表示访谈、观察或问卷中的证据重点，不用作按钮、导航或装饰。
 - 地图底图低饱和处理，保证桥梁路线、活动点位和文字标签先被看见。
-- 深色模式仍沿用同一语义变量名，由一个 `prefers-color-scheme` 覆盖块整体替换，不能让不同区段自行反转主题。
+- 深色模式仍沿用同一语义变量名，由页面根节点的 `data-theme` 整体替换，不能让不同区段自行反转主题。
+- 首次访问跟随 `prefers-color-scheme`，用户手动选择后使用 `localStorage` 记忆，并覆盖系统变化。
 
 ## 3. Typography Rules
 
 **Font Stack:**
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap');
 
 :root {
   --font-sans: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
-  --font-number: "Noto Sans SC", "Segoe UI", sans-serif;
+  --font-number: "Roboto Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 ```
 
@@ -91,13 +92,14 @@
 | Panel H3 | `--font-sans` | `1rem` | 700 | 1.45 | 0 |
 | Body | `--font-sans` | `1rem` | 400 | 1.75 | `0.02em` |
 | Metadata | `--font-sans` | `0.8125rem` | 600 | 1.55 | `0.01em` |
-| Number | `--font-number` | context-specific | 700 | 1 | 0 |
+| Number | `--font-number` | context-specific | 500 | 1 | 0 |
 
 **Typography Rules:**
 
 - 标题只通过字重、大小与留白建立层级，不用渐变、描边或投影。
 - 正文最小 15px，中文段落行高不低于 1.7，避免地图和证据文字显得拥挤。
 - 数字指标使用 `font-variant-numeric: tabular-nums`，便于纵向比较。
+- 页头指标数字使用 `--font-number`，中文标签继续使用 `--font-sans`，形成测绘读数与档案说明的字阶对比。
 - 桥梁名称、路线名称和证据标题优先使用完整中文词组，不做全大写英文式标签。
 - **NEVER use**: Inter 作为默认字体、无品牌理由的衬线字体、渐变文字、装饰性斜体。
 
@@ -436,7 +438,46 @@ document.querySelectorAll<HTMLElement>(".reveal").forEach((element) => observer.
 - ❌ 不改变既有数据字段、桥梁 ID、地图容器 ID 或无障碍文本。
 - ❌ 不为了视觉效果引入新的 UI 框架、动画库或图片生成素材。
 
-## 9. Responsive Behavior
+## 9. Archive System Theme Upgrade
+
+本次升级是对现有江岸档案的定向演进，不改变页面信息架构、数据字段、桥梁 ID、地图容器 ID 或图表 ID。
+
+### Header and Metrics
+
+- 页头左侧保留眉题、主标题与摘要，右侧组织三组项目指标和主题切换按钮。
+- 指标数字使用 Roboto Mono、500 字重与 `tabular-nums`，不强制补零，不改变真实数据。
+- 指标中文标签使用 Noto Sans SC，英文辅助标签仅作为低对比度信息层。
+- 主题按钮显示下一步动作：日间主题显示「暗夜」，暗夜主题显示「日间」。按钮最小尺寸为 44px，必须提供 `aria-pressed`、动态 `aria-label` 和键盘焦点。
+
+### Theme State Contract
+
+```ts
+type ThemeMode = "light" | "dark";
+const THEME_STORAGE_KEY = "wuhan-bridge-map-theme";
+const THEME_CHANGE_EVENT = "bridge-theme-change";
+```
+
+- `html[data-theme="light"]` 与 `html[data-theme="dark"]` 是唯一页面主题入口。
+- 没有保存值时解析系统偏好，手动切换后保存用户选择。
+- 主题切换只更新视觉状态，不重新请求数据，不重置桥梁选择、地图中心点或地图缩放。
+- `localStorage` 不可用时保持当前会话状态，不让主题错误阻断地图和图表初始化。
+
+### Map and Chart Synchronization
+
+- 地图外壳、地图控件、弹窗和标签从语义变量取色。
+- 地图底图在 MapLibre style 已加载后使用 `setPaintProperty` 更新，不重建地图实例。
+- 路线仍使用数据提供的语义颜色，桥梁 halo、点位描边和底图明度随主题切换。
+- ECharts 继续从 CSS 变量读取颜色，主题事件触发后重新设置 option，保持动画关闭、数据顺序和画布尺寸不变。
+
+### Responsive and Accessibility
+
+- 桌面端使用「左侧叙事、右侧读数」的页头布局。
+- 980px 以下将指标与主题按钮移到标题内容下方，地图继续优先显示。
+- 560px 以下保持紧凑指标网格与 44px 主题按钮，禁止横向溢出。
+- 所有主题、按钮、地图控件和图表状态都必须同时通过键盘、焦点样式和文本状态表达。
+- 所有主题过渡保持 150-300ms，并在 `prefers-reduced-motion: reduce` 下关闭。
+
+## 10. Responsive Behavior
 
 | Name | Width | Key Changes |
 | --- | --- | --- |
