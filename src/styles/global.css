@@ -13,8 +13,8 @@
   --border-hover: #08768d;
   --text: #17231f;
   --text-strong: #0f1a17;
-  --text-secondary: #65736e;
-  --text-tertiary: #78857f;
+  --text-secondary: #5f6d67;
+  --text-tertiary: #62706a;
   --text-on-accent: #eef6f3;
   --accent: #08768d;
   --accent-hover: #075466;
@@ -236,7 +236,7 @@ button:focus-visible {
   order: 3;
   color: var(--text-tertiary);
   font-family: var(--font-number);
-  font-size: 0.58rem;
+  font-size: 0.66rem;
   letter-spacing: 0.08em;
   line-height: 1.25;
 }
@@ -455,11 +455,6 @@ button:focus-visible {
   background: transparent;
 }
 
-.source-chip:hover {
-  color: var(--accent-hover);
-  border-color: var(--accent);
-}
-
 .story-section {
   padding-block: 1rem;
   border-block-end: 1px solid var(--border);
@@ -570,12 +565,47 @@ button:focus-visible {
 }
 
 .map-legend-title {
-  margin: 0 0 0.4rem;
+  margin: 0;
   color: var(--accent-hover);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.5;
+}
+
+.map-legend-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.map-legend-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.map-legend-chevron {
+  display: none;
+  flex: 0 0 auto;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-block-start: -2px;
+  border-inline-end: 1.6px solid var(--text-tertiary);
+  border-block-end: 1.6px solid var(--text-tertiary);
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.map-legend-content {
+  margin-block-start: 0.4rem;
 }
 
 .map-legend-list {
@@ -1055,6 +1085,36 @@ button:focus-visible {
   .map-stage,
   .evidence-band {
     padding-inline: 0.75rem;
+  }
+
+  .map-legend {
+    padding: 0.3rem 0.5rem;
+  }
+
+  .map-legend.is-open {
+    padding: 0.7rem 0.9rem 0.65rem;
+  }
+
+  .map-legend-toggle {
+    min-height: 44px;
+    padding-inline: 0.35rem;
+  }
+
+  .map-legend-chevron {
+    display: block;
+  }
+
+  .map-legend.is-open .map-legend-chevron {
+    transform: rotate(225deg);
+  }
+
+  .map-legend-content {
+    display: none;
+  }
+
+  .map-legend.is-open .map-legend-content {
+    display: block;
+    margin-block-start: 0.35rem;
   }
 
   .map-header h1 {

@@ -34,6 +34,7 @@ const state = {
   routes: null as RouteFeatureCollection | null,
   labelMarkers: [] as maplibregl.Marker[],
   map: null as maplibregl.Map | null,
+  popup: null as maplibregl.Popup | null,
 };
 
 window.addEventListener(THEME_CHANGE_EVENT, (event) => {
@@ -66,6 +67,7 @@ async function initMapApp() {
     renderStoryPanel(state.activeBridgeId);
     createMap(bridges, routes);
     renderMapLegend(routes);
+    bindLegendToggle();
     byId("bridge-list").setAttribute("aria-busy", "false");
     status.hidden = true;
   } catch (error) {
@@ -325,13 +327,10 @@ function markActiveBridge() {
 function showPopup(feature: BridgeFeature) {
   if (!state.map) return;
 
-  new maplibregl.Popup({ closeButton: false, maxWidth: "260px" })
-    .setLngLat(feature.geometry.coordinates)
-    .setHTML(`
+  replacePopup(feature.geometry.coordinates, `
       <strong class="popup-title">${escapeHtml(feature.properties.name)}</strong>
       <span>${feature.properties.openedYear} / ${escapeHtml(feature.properties.bridgeType)}</span>
-    `)
-    .addTo(state.map);
+    `);
 }
 
 function renderBridgeMapLabels() {
@@ -383,6 +382,34 @@ function renderMapLegend(routes: RouteFeatureCollection) {
   });
 }
 
+const MOBILE_LEGEND_QUERY = "(max-width: 560px)";
+
+function bindLegendToggle() {
+  const legend = document.getElementById("map-legend");
+  const toggle = document.getElementById("map-legend-toggle");
+  if (!legend || !toggle) return;
+
+  const mobile = window.matchMedia(MOBILE_LEGEND_QUERY);
+  setLegendOpen(!mobile.matches);
+
+  toggle.addEventListener("click", () => {
+    setLegendOpen(!legend.classList.contains("is-open"));
+  });
+
+  mobile.addEventListener("change", (event) => {
+    setLegendOpen(!event.matches);
+  });
+}
+
+function setLegendOpen(open: boolean) {
+  const legend = document.getElementById("map-legend");
+  const toggle = document.getElementById("map-legend-toggle");
+  if (!legend || !toggle) return;
+
+  legend.classList.toggle("is-open", open);
+  toggle.setAttribute("aria-expanded", String(open));
+}
+
 function focusRoute(routeId: string) {
   const route = state.routes?.features.find((item) => item.properties.id === routeId);
   if (!route || !state.map) return;
@@ -396,6 +423,10 @@ function focusRoute(routeId: string) {
   const firstBridgeId = getRouteBridgeIds(route)[0];
   if (firstBridgeId) {
     selectBridge(firstBridgeId, false);
+  }
+
+  if (window.matchMedia(MOBILE_LEGEND_QUERY).matches) {
+    setLegendOpen(false);
   }
 }
 
@@ -460,9 +491,16 @@ function showRoutePopup(properties: Record<string, unknown>, lngLat: maplibregl.
     read("summary") ? `<span>${escapeHtml(read("summary"))}</span>` : "",
   ].filter(Boolean);
 
-  new maplibregl.Popup({ closeButton: false, maxWidth: "280px" })
+  replacePopup(lngLat, lines.join("<br/>"));
+}
+
+function replacePopup(lngLat: maplibregl.LngLatLike, html: string) {
+  if (!state.map) return;
+
+  state.popup?.remove();
+  state.popup = new maplibregl.Popup({ closeButton: false, maxWidth: "280px" })
     .setLngLat(lngLat)
-    .setHTML(lines.join("<br/>"))
+    .setHTML(html)
     .addTo(state.map);
 }
 

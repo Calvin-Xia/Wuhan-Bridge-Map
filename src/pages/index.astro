@@ -77,10 +77,21 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
 
           <section class="map-column" aria-label="交互地图">
             <div id="bridge-map" class="map-canvas"></div>
-            <aside class="map-legend" aria-label="路线图例">
-              <p class="map-legend-title">路线图例</p>
-              <ul id="map-legend-list" class="map-legend-list" aria-busy="true"></ul>
-              <p class="map-legend-note">点位间为直线示意，非实际步行路径。</p>
+            <aside class="map-legend" id="map-legend" aria-label="路线图例">
+              <button
+                class="map-legend-toggle"
+                id="map-legend-toggle"
+                type="button"
+                aria-expanded="true"
+                aria-controls="map-legend-content"
+              >
+                <span class="map-legend-title">路线图例</span>
+                <span class="map-legend-chevron" aria-hidden="true"></span>
+              </button>
+              <div class="map-legend-content" id="map-legend-content">
+                <ul id="map-legend-list" class="map-legend-list" aria-busy="true"></ul>
+                <p class="map-legend-note">点位间为直线示意，非实际步行路径。</p>
+              </div>
             </aside>
             <p id="map-status" class="map-status" role="status">地图与点位数据载入中</p>
           </section>

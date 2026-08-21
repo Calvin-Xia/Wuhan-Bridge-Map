@@ -23,7 +23,7 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 - `src/lib/`：纯函数与类型（data-validation.ts 校验、bridge-chain.ts 链线校验、chart-options.ts 图表工厂、map-layer-spec.ts 图层契约），同名 `.test.ts` 为契约测试
 - `src/scripts/`：客户端入口（map-app.ts 地图、charts.ts 图表、voices.ts 引语、theme.ts、reveal.ts）
 - `src/pages/index.astro` 单页；`src/styles/global.css` 全局样式（明暗主题 token）
-- `data/`（根目录，未跟踪）：原始调研材料（工作总结、问卷分析），只读素材
+- `data/`（根目录，已 git 跟踪）：原始调研材料（工作总结、问卷分析），只读素材
 
 ## 数据约定（改动必须同步）
 

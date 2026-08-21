@@ -39,8 +39,8 @@
   /* Text */
   --text: #17231f;
   --text-strong: #0f1a17;
-  --text-secondary: #65736e;
-  --text-tertiary: #78857f;
+  --text-secondary: #5f6d67;
+  --text-tertiary: #62706a;
   --text-on-accent: #eef6f3;
 
   /* Accent */
