@@ -4,11 +4,13 @@ import type { LngLatBoundsLike, StyleSpecification } from "maplibre-gl";
 import type {
   BridgeFeature,
   BridgeFeatureCollection,
+  RouteFeature,
   RouteFeatureCollection,
   SourceRecord,
   StoryRecord,
 } from "../lib/data-validation";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
+import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { INITIAL_MAP_VIEW } from "../lib/map-view";
 import {
   createBridgeMapLayers,
@@ -29,6 +31,7 @@ const state = {
   bridges: [] as BridgeFeature[],
   stories: [] as StoryRecord[],
   sources: [] as SourceRecord[],
+  routes: null as RouteFeatureCollection | null,
   labelMarkers: [] as maplibregl.Marker[],
   map: null as maplibregl.Map | null,
 };
@@ -55,16 +58,19 @@ async function initMapApp() {
     state.bridges = bridges.features;
     state.stories = stories;
     state.sources = sources;
+    state.routes = routes;
     state.activeBridgeId = state.bridges[0]?.properties.id ?? "";
 
     updateBridgeCount(state.bridges.length);
     renderBridgeList();
     renderStoryPanel(state.activeBridgeId);
     createMap(bridges, routes);
+    renderMapLegend(routes);
     byId("bridge-list").setAttribute("aria-busy", "false");
-    status.textContent = "点位、路线与故事卡片已加载";
+    status.hidden = true;
   } catch (error) {
     byId("bridge-list").setAttribute("aria-busy", "false");
+    status.hidden = false;
     status.textContent = "数据载入失败，请检查 public/data 下的 GeoJSON 和 JSON 文件。";
     console.error(error);
   }
@@ -123,9 +129,19 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
       map.getCanvas().style.cursor = "";
     });
 
+    bindRouteInteractions(map);
   });
 
-  map.on("error", () => {
+  map.on("load", () => {
+    status.hidden = true;
+  });
+
+  map.on("error", (event) => {
+    const error = event.error as { url?: string; tile?: unknown } | undefined;
+    // 瓦片级错误（OSM 偶发失败、限流、单瓦片 404）可自动重试，不打扰用户。
+    if (error?.url || error?.tile) return;
+
+    status.hidden = false;
     status.textContent = "底图暂时不可用，桥梁列表和故事卡片仍可使用。";
   });
 }
@@ -232,8 +248,26 @@ function renderStoryPanel(bridgeId: string) {
     .map((sourceId) => state.sources.find((source) => source.id === sourceId))
     .filter((source): source is SourceRecord => Boolean(source));
 
+  const quoteMarkup =
+    story.quoteConsent === "not-collected"
+      ? `<p class="quote-pending">本点位尚无访谈或开放回答引用，以问卷聚合数据与公开资料呈现。</p>`
+      : `<blockquote class="quote">${escapeHtml(story.interviewQuote)}${
+          story.quoteLabel ? `<cite>${escapeHtml(story.quoteLabel)}</cite>` : ""
+        }</blockquote>`;
+
+  const evidenceMarkup = story.surveyEvidence?.length
+    ? `<section class="story-section">
+      <h3>问卷与开放题证据</h3>
+      <ul class="evidence-list">
+        ${story.surveyEvidence.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    </section>`
+    : "";
+
+  const analysisMarkup = story.analysis.map((paragraph) => `<p>${renderEmphasis(paragraph)}</p>`).join("");
+
   panel.innerHTML = `
-    <p class="section-label">${escapeHtml(bridge.properties.river)} · ${bridge.properties.openedYear}</p>
+    <p class="section-label">当前点位 · ${escapeHtml(bridge.properties.river)} · ${bridge.properties.openedYear}</p>
     <h2>${escapeHtml(bridge.properties.name)}</h2>
     <ul class="tag-row" aria-label="主题标签">
       ${bridge.properties.themeTags.map((tag) => `<li><span class="tag">${escapeHtml(tag)}</span></li>`).join("")}
@@ -242,11 +276,12 @@ function renderStoryPanel(bridgeId: string) {
       <h3>${escapeHtml(story.title)}</h3>
       <p><strong>${escapeHtml(story.question)}</strong></p>
       <p>${escapeHtml(story.fieldObservation)}</p>
-      <blockquote class="quote">${escapeHtml(story.interviewQuote)}</blockquote>
+      ${quoteMarkup}
     </section>
+    ${evidenceMarkup}
     <section class="story-section">
       <h3>调研分析</h3>
-      <p>${escapeHtml(story.analysis)}</p>
+      ${analysisMarkup}
     </section>
     <section class="story-section">
       <h3>思政连接</h3>
@@ -320,6 +355,117 @@ function renderBridgeMapLabels() {
   });
 }
 
+function renderMapLegend(routes: RouteFeatureCollection) {
+  const list = document.getElementById("map-legend-list");
+  if (!list) return;
+
+  list.setAttribute("aria-busy", "false");
+  list.innerHTML = routes.features
+    .map((route) => {
+      const props = route.properties;
+      const isChain = props.id === BRIDGE_CHAIN_ROUTE_ID;
+      const detail = props.group
+        ? `${escapeHtml(props.group)} · 回收问卷 ${props.sampleCount ?? 0} 份`
+        : "串联 8 座桥点位";
+      const swatchClass = isChain ? "map-legend-swatch map-legend-swatch--dashed" : "map-legend-swatch";
+
+      return `<li>
+        <button class="map-legend-entry" type="button" data-route-id="${escapeHtml(props.id)}">
+          <span class="${swatchClass}" style="--legend-color: ${escapeHtml(props.color)}" aria-hidden="true"></span>
+          <span class="map-legend-item"><strong>${escapeHtml(props.day)} · ${escapeHtml(props.name)}</strong><small>${detail}</small></span>
+        </button>
+      </li>`;
+    })
+    .join("");
+
+  list.querySelectorAll<HTMLButtonElement>(".map-legend-entry").forEach((button) => {
+    button.addEventListener("click", () => focusRoute(button.dataset.routeId ?? ""));
+  });
+}
+
+function focusRoute(routeId: string) {
+  const route = state.routes?.features.find((item) => item.properties.id === routeId);
+  if (!route || !state.map) return;
+
+  const bounds = new maplibregl.LngLatBounds();
+  for (const coordinate of route.geometry.coordinates) {
+    bounds.extend(coordinate);
+  }
+  state.map.fitBounds(bounds, { padding: 56, duration: 700 });
+
+  const firstBridgeId = getRouteBridgeIds(route)[0];
+  if (firstBridgeId) {
+    selectBridge(firstBridgeId, false);
+  }
+}
+
+function getRouteBridgeIds(route: RouteFeature): string[] {
+  return route.geometry.coordinates.flatMap((coordinate) => {
+    const bridge = state.bridges.find(
+      (item) =>
+        item.geometry.coordinates[0] === coordinate[0] &&
+        item.geometry.coordinates[1] === coordinate[1],
+    );
+    return bridge ? [bridge.properties.id] : [];
+  });
+}
+
+function bindRouteInteractions(map: maplibregl.Map) {
+  for (const layerId of ["research-routes", "bridge-chain"]) {
+    map.on("click", layerId, (event) => {
+      const feature = event.features?.[0];
+      if (!feature) return;
+      showRoutePopup(feature.properties, event.lngLat);
+    });
+
+    map.on("mouseenter", layerId, () => {
+      map.getCanvas().style.cursor = "pointer";
+      setRouteLayerEmphasis(layerId, true);
+    });
+
+    map.on("mouseleave", layerId, () => {
+      map.getCanvas().style.cursor = "";
+      setRouteLayerEmphasis(layerId, false);
+    });
+  }
+}
+
+function setRouteLayerEmphasis(layerId: string, hover: boolean) {
+  if (!state.map) return;
+
+  if (layerId === "research-routes") {
+    state.map.setPaintProperty("research-routes", "line-width", hover ? 6 : 4);
+    state.map.setPaintProperty("research-routes", "line-opacity", hover ? 1 : 0.82);
+  } else {
+    state.map.setPaintProperty(
+      "bridge-chain",
+      "line-width",
+      hover
+        ? ["interpolate", ["linear"], ["zoom"], 9, 5, 14, 8]
+        : ["interpolate", ["linear"], ["zoom"], 9, 3, 14, 6],
+    );
+    state.map.setPaintProperty("bridge-chain", "line-opacity", hover ? 1 : 0.75);
+  }
+}
+
+function showRoutePopup(properties: Record<string, unknown>, lngLat: maplibregl.LngLat) {
+  if (!state.map) return;
+
+  const read = (key: string) => (properties[key] === undefined ? "" : String(properties[key]));
+  const lines = [
+    `<strong class="popup-title">${escapeHtml(read("name"))}</strong>`,
+    `<span>${escapeHtml(read("day"))}${read("group") ? ` · ${escapeHtml(read("group"))}` : ""}</span>`,
+    read("date") ? `<span>${escapeHtml(read("date"))}</span>` : "",
+    properties.sampleCount !== undefined ? `<span>回收问卷 ${Number(properties.sampleCount)} 份</span>` : "",
+    read("summary") ? `<span>${escapeHtml(read("summary"))}</span>` : "",
+  ].filter(Boolean);
+
+  new maplibregl.Popup({ closeButton: false, maxWidth: "280px" })
+    .setLngLat(lngLat)
+    .setHTML(lines.join("<br/>"))
+    .addTo(state.map);
+}
+
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(path);
   if (!response.ok) {
@@ -350,4 +496,11 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function renderEmphasis(text: string): string {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts
+    .map((part, index) => (index % 2 === 1 ? `<strong>${escapeHtml(part)}</strong>` : escapeHtml(part)))
+    .join("");
 }

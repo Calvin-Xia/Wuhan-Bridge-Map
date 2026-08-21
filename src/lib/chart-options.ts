@@ -1,138 +1,199 @@
 import type { ComposeOption } from "echarts/core";
-import type { BarSeriesOption, PieSeriesOption } from "echarts/charts";
+import type { BarSeriesOption } from "echarts/charts";
 import type {
+  AriaComponentOption,
   GridComponentOption,
-  LegendComponentOption,
   TooltipComponentOption,
 } from "echarts/components";
 import type { SurveyMetric } from "./data-validation";
 
 export type ChartOption = ComposeOption<
-  | BarSeriesOption
-  | PieSeriesOption
-  | GridComponentOption
-  | LegendComponentOption
-  | TooltipComponentOption
+  BarSeriesOption | GridComponentOption | TooltipComponentOption | AriaComponentOption
 >;
 
 export interface ChartTheme {
   accent: string;
-  chartTones: string[];
   evidence: string;
   ink: string;
   line: string;
   muted: string;
+  surface: string;
 }
 
-export function createBarChartOption(data: SurveyMetric[], color: string, theme: ChartTheme): ChartOption {
+export interface BarChartConfig {
+  /** Horizontal bars (multi-select distributions read better sideways). */
+  horizontal?: boolean;
+  /** Color the top-ranked item with the evidence tone. */
+  highlightTop?: boolean;
+  /** Render the percent (or value) next to each bar. */
+  showValueLabels?: boolean;
+}
+
+const VERTICAL_LABEL_ROTATE = 30;
+const VERTICAL_GRID_BOTTOM = 78;
+const HORIZONTAL_GRID_LEFT = 128;
+
+export function createBarChartOption(
+  data: SurveyMetric[],
+  color: string,
+  theme: ChartTheme,
+  config: BarChartConfig = {},
+): ChartOption {
+  const topValue = Math.max(...data.map((item) => item.value));
+  const barItems = data.map((item) => ({
+    value: item.value,
+    name: item.label,
+    percent: item.percent,
+    mean: item.mean,
+    detail: item.detail,
+    itemStyle: {
+      color: config.highlightTop && item.value === topValue ? theme.evidence : color,
+      borderRadius: config.horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+    },
+  }));
+
   return {
     animation: false,
+    aria: {
+      enabled: true,
+    },
     color: [color],
     tooltip: {
       trigger: "axis",
-    },
-    grid: {
-      top: 22,
-      right: 10,
-      bottom: 68,
-      left: 36,
-    },
-    xAxis: {
-      type: "category",
-      data: data.map((item) => item.label),
-      axisLabel: {
-        interval: 0,
-        rotate: 28,
-        margin: 12,
-        color: theme.muted,
+      axisPointer: {
+        type: "shadow",
       },
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: {
-        color: theme.muted,
+      backgroundColor: theme.surface,
+      borderColor: theme.line,
+      textStyle: {
+        color: theme.ink,
       },
-      splitLine: {
-        lineStyle: {
-          color: theme.line,
+      formatter: createMetricTooltip(),
+    },
+    grid: config.horizontal
+      ? {
+          top: 12,
+          right: 44,
+          bottom: 28,
+          left: HORIZONTAL_GRID_LEFT,
+        }
+      : {
+          top: 28,
+          right: 12,
+          bottom: VERTICAL_GRID_BOTTOM,
+          left: 40,
         },
-      },
-    },
+    xAxis: config.horizontal
+      ? {
+          type: "value",
+          axisLabel: {
+            color: theme.muted,
+          },
+          splitLine: {
+            lineStyle: {
+              color: theme.line,
+            },
+          },
+        }
+      : {
+          type: "category",
+          data: data.map((item) => item.label),
+          axisLabel: {
+            interval: 0,
+            rotate: VERTICAL_LABEL_ROTATE,
+            margin: 12,
+            color: theme.muted,
+          },
+          axisTick: {
+            alignWithLabel: true,
+          },
+        },
+    yAxis: config.horizontal
+      ? {
+          type: "category",
+          data: data.map((item) => item.label),
+          inverse: true,
+          axisLabel: {
+            width: HORIZONTAL_GRID_LEFT - 12,
+            overflow: "truncate",
+            color: theme.muted,
+          },
+          axisTick: {
+            alignWithLabel: true,
+          },
+        }
+      : {
+          type: "value",
+          axisLabel: {
+            color: theme.muted,
+          },
+          splitLine: {
+            lineStyle: {
+              color: theme.line,
+            },
+          },
+        },
     series: [
       {
         type: "bar",
-        data: data.map((item) => item.value),
+        data: barItems,
         barMaxWidth: 34,
-        itemStyle: {
-          borderRadius: [4, 4, 0, 0],
+        label: {
+          show: Boolean(config.showValueLabels),
+          position: config.horizontal ? "right" : "top",
+          distance: 6,
+          color: theme.ink,
+          fontSize: 11,
+          fontWeight: 600,
+          formatter: (params) => {
+            const item = params.data as SurveyMetric | undefined;
+            return item?.percent !== undefined ? formatPercent(item.percent) : String(params.value);
+          },
+        },
+        emphasis: {
+          focus: "series",
         },
       },
     ],
   };
 }
 
-export function createPieChartOption(data: SurveyMetric[], theme: ChartTheme): ChartOption {
-  return {
-    animation: false,
-    color: theme.chartTones,
-    tooltip: {
-      trigger: "item",
-    },
-    legend: {
-      bottom: 0,
-      left: "center",
-      itemWidth: 10,
-      itemHeight: 10,
-      textStyle: {
-        color: theme.muted,
-      },
-    },
-    series: [createPieSeriesOption(data, theme)],
+function createMetricTooltip(): NonNullable<TooltipComponentOption["formatter"]> {
+  return (params) => {
+    const list = Array.isArray(params) ? params : [params];
+
+    return list
+      .map((entry) => {
+        const item = entry.data as SurveyMetric | undefined;
+        const name = item?.detail ?? String(entry.name);
+        const lines = [`<strong>${escapeHtml(name)}</strong>`];
+
+        if (item) {
+          lines.push(`人数：${item.value}`);
+          if (item.percent !== undefined) {
+            lines.push(`占比：${formatPercent(item.percent)}`);
+          }
+          if (item.mean !== undefined) {
+            lines.push(`有效评分均值：${item.mean.toFixed(2)}（1—5 分）`);
+          }
+        }
+
+        return lines.join("<br/>");
+      })
+      .join("<br/>—————<br/>");
   };
 }
 
-export function createPieSeriesOption(data: SurveyMetric[], theme: ChartTheme): PieSeriesOption {
-  return {
-    type: "pie",
-    radius: ["39%", "63%"],
-    center: ["37%", "43%"],
-    avoidLabelOverlap: true,
-    label: {
-      show: true,
-      position: "outside",
-      alignTo: "edge",
-      edgeDistance: 8,
-      bleedMargin: 4,
-      color: theme.ink,
-      fontSize: 12,
-      lineHeight: 18,
-      formatter: (params) => `${params.name}\n${params.percent}%`,
-    },
-    labelLine: {
-      show: true,
-      length: 10,
-      length2: 8,
-      lineStyle: {
-        color: theme.line,
-      },
-    },
-    labelLayout: {
-      hideOverlap: false,
-    },
-    emphasis: {
-      scale: true,
-      scaleSize: 7,
-      itemStyle: {
-        shadowBlur: 12,
-        shadowColor: "rgba(15, 26, 23, 0.22)",
-      },
-      label: {
-        fontWeight: 800,
-      },
-    },
-    data: data.map((item) => ({
-      name: item.label,
-      value: item.value,
-    })),
-  };
+function formatPercent(percent: number): string {
+  const text = String(percent);
+  return text.includes(".") ? `${text.replace(/\.?0+$/, "")}%` : `${text}%`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

@@ -8,6 +8,7 @@ import {
   type SourceRecord,
   type StoryRecord,
   type SurveySummary,
+  type VoiceRecord,
 } from "../src/lib/data-validation";
 
 async function readJson<T>(path: string): Promise<T> {
@@ -15,12 +16,13 @@ async function readJson<T>(path: string): Promise<T> {
   return JSON.parse(file) as T;
 }
 
-const [bridges, routes, stories, survey, sources] = await Promise.all([
+const [bridges, routes, stories, survey, sources, voices] = await Promise.all([
   readJson<BridgeFeatureCollection>("public/data/bridges.geojson"),
   readJson<RouteFeatureCollection>("public/data/routes.geojson"),
   readJson<StoryRecord[]>("public/data/stories.json"),
   readJson<SurveySummary>("public/data/survey-summary.json"),
   readJson<SourceRecord[]>("public/data/sources.json"),
+  readJson<VoiceRecord[]>("public/data/voices.json"),
 ]);
 
 const dataset: ResearchDataset = {
@@ -29,6 +31,7 @@ const dataset: ResearchDataset = {
   stories,
   survey,
   sources,
+  voices,
 };
 
 const issues = validateResearchDataset(dataset);

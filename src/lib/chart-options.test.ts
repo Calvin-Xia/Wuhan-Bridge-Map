@@ -1,78 +1,82 @@
 import { describe, expect, it } from "vitest";
-import {
-  createBarChartOption,
-  createPieSeriesOption,
-  type ChartTheme,
-} from "./chart-options";
+import { createBarChartOption, type ChartTheme } from "./chart-options";
+import type { SurveyMetric } from "./data-validation";
 
 const theme: ChartTheme = {
-  accent: "#cf6245",
-  chartTones: ["#cf6245", "#08768d", "#9f7741"],
-  evidence: "#08768d",
+  accent: "#08768d",
+  evidence: "#cf6245",
   ink: "#0f1a17",
   line: "#d4ddd8",
   muted: "#65736e",
+  surface: "#f7f8f4",
 };
 
-const metrics = [
-  { label: "熟悉", value: 6 },
-  { label: "听说过", value: 4 },
+const metrics: SurveyMetric[] = [
+  { label: "熟悉", value: 6, percent: 60, detail: "最熟悉的桥梁" },
+  { label: "听说过", value: 4, percent: 40 },
 ];
 
-describe("chart option factories", () => {
-  it("keeps pie annotations outside the ring and emphasizes the hovered slice", () => {
-    const pie = createPieSeriesOption(metrics, theme);
+describe("createBarChartOption", () => {
+  it("renders vertical bars with rotated labels and enough bottom room", () => {
+    const option = createBarChartOption(metrics, theme.accent, theme);
 
-    expect(pie.type).toBe("pie");
-    expect(pie.radius).toEqual(["39%", "63%"]);
-    expect(pie.center).toEqual(["37%", "43%"]);
-    expect(pie.avoidLabelOverlap).toBe(true);
-    expect(pie.label).toMatchObject({
-      show: true,
-      position: "outside",
-      alignTo: "edge",
-      edgeDistance: 8,
-      bleedMargin: 4,
-      color: theme.ink,
-      fontSize: 12,
-      lineHeight: 18,
-    });
-    expect(pie.labelLine).toMatchObject({
-      show: true,
-      length: 10,
-      length2: 8,
-      lineStyle: { color: theme.line },
-    });
-    expect(pie.labelLayout).toEqual({ hideOverlap: false });
-    expect(pie.emphasis).toMatchObject({
-      scale: true,
-      scaleSize: 7,
-      itemStyle: {
-        shadowBlur: 12,
-        shadowColor: "rgba(15, 26, 23, 0.22)",
-      },
-      label: { fontWeight: 800 },
-    });
-    expect(pie.data).toEqual([
-      { name: "熟悉", value: 6 },
-      { name: "听说过", value: 4 },
-    ]);
-
-    const formatter = pie.label?.formatter;
-    expect(typeof formatter).toBe("function");
-    if (typeof formatter === "function") {
-      expect(formatter({ name: "熟悉", percent: 60 } as never)).toBe("熟悉\n60%");
-    }
+    expect(option.grid).toMatchObject({ bottom: 78 });
+    expect((option.xAxis as { type: string }).type).toBe("category");
+    expect((option.xAxis as { axisLabel: { rotate: number } }).axisLabel.rotate).toBe(30);
+    expect((option.series as { type: string }[])[0].type).toBe("bar");
   });
 
-  it("leaves enough bottom room for rotated bar labels", () => {
-    const bar = createBarChartOption(metrics, theme.accent, theme);
+  it("lays out horizontal bars with truncated side labels", () => {
+    const option = createBarChartOption(metrics, theme.accent, theme, { horizontal: true });
 
-    expect(bar.grid).toMatchObject({ bottom: 68 });
-    expect(bar.xAxis).toMatchObject({
-      axisLabel: {
-        margin: 12,
-      },
+    expect(option.grid).toMatchObject({ left: 128 });
+    expect(option.yAxis).toMatchObject({ type: "category", inverse: true });
+  });
+
+  it("highlights the top item with the evidence tone", () => {
+    const option = createBarChartOption(metrics, theme.accent, theme, { highlightTop: true });
+    const series = (option.series as { data: { itemStyle: { color: string } }[] }[])[0];
+
+    expect(series.data[0].itemStyle.color).toBe(theme.evidence);
+    expect(series.data[1].itemStyle.color).toBe(theme.accent);
+  });
+
+  it("formats percent labels without trailing zeros", () => {
+    const option = createBarChartOption(
+      [{ label: "a", value: 1, percent: 41.67 }],
+      theme.accent,
+      theme,
+      { showValueLabels: true },
+    );
+    const formatter = (
+      (option.series as { label: { formatter: (params: { data?: SurveyMetric; value: number }) => string } }[])[0]
+        .label.formatter
+    );
+
+    expect(formatter({ data: { label: "a", value: 1, percent: 41.67 }, value: 1 })).toBe("41.67%");
+    expect(formatter({ data: { label: "a", value: 1, percent: 60 }, value: 1 })).toBe("60%");
+  });
+
+  it("builds a rich tooltip from metric detail, count, percent and mean", () => {
+    const option = createBarChartOption(
+      [{ label: "x", value: 6, percent: 60, mean: 4.24, detail: "完整题项" }],
+      theme.accent,
+      theme,
+    );
+    const formatter = (
+      option.tooltip as unknown as {
+        formatter: (params: { name: string; data?: SurveyMetric }) => string;
+      }
+    ).formatter;
+
+    const html = formatter({
+      name: "x",
+      data: { label: "x", value: 6, percent: 60, mean: 4.24, detail: "完整题项" },
     });
+
+    expect(html).toContain("完整题项");
+    expect(html).toContain("人数：6");
+    expect(html).toContain("占比：60%");
+    expect(html).toContain("均值：4.24");
   });
 });

@@ -1,5 +1,7 @@
 # 武汉桥梁地图连线与证据区体验优化 Implementation Plan
 
+> 历史归档（2026-07-13）：该计划已执行完毕；后续迭代（8 桥、数据整合、路线交互）以根目录 `DESIGN.md` 与 `AGENTS.md` 为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (recommended) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在不重启 8788 热更新 dev 的前提下，修正 9 座桥的中心点、加入二七长江大桥和连续串联线，采用 A 方案收窄地图，并修复图表注释与一次性图标动效。

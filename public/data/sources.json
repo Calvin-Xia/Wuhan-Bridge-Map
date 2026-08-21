@@ -18,7 +18,42 @@
     "title": "武汉桥梁基础资料汇总",
     "type": "document",
     "access": "public",
-    "note": "后续替换为政府网站、馆方材料或权威出版物的条目化索引。"
+    "note": "8 座桥梁的年代、桥型与工程背景条目，对照政府网站、馆方材料与权威出版物整理。"
+  },
+  {
+    "id": "source-survey-online",
+    "title": "《桥梁、城市与公众生活调查》网络版分析",
+    "type": "survey",
+    "access": "aggregated",
+    "note": "230 份进入、228 份有效，覆盖武汉及全国；仅展示聚合统计，不公开个人答卷。"
+  },
+  {
+    "id": "source-survey-field",
+    "title": "《武汉桥梁与桥下公共空间公众体验调查》现场版分析",
+    "type": "survey",
+    "access": "aggregated",
+    "note": "59 份提交、57 份有效，覆盖 7 座桥梁点位；含封闭题频数与 SPSS 信效度复核。"
+  },
+  {
+    "id": "source-open-online",
+    "title": "网络版第 20 题开放回答质性分析",
+    "type": "survey",
+    "access": "aggregated",
+    "note": "228 条回答中 72 条实质文本；主题频次只描述本次受访者的表达结构。"
+  },
+  {
+    "id": "source-open-field",
+    "title": "现场版第 18 题开放回答分析",
+    "type": "survey",
+    "access": "aggregated",
+    "note": "57 条记录中 22 条实质回答；引用短句均经匿名处理。"
+  },
+  {
+    "id": "source-team-summary",
+    "title": "三组现场调研工作总结",
+    "type": "field-note",
+    "access": "team-private",
+    "note": "2026-07-19 杨泗港—白沙洲、南岸嘴—晴川桥—长江大桥—鹦鹉洲、二桥—二七—天兴洲三组记录。"
   },
   {
     "id": "field-template",
@@ -26,12 +61,5 @@
     "type": "field-note",
     "access": "team-private",
     "note": "公开地图只展示脱敏摘要，完整记录保存在 private-data。"
-  },
-  {
-    "id": "survey-summary",
-    "title": "青年桥梁认知问卷聚合结果",
-    "type": "survey",
-    "access": "aggregated",
-    "note": "仅展示聚合统计，不公开个人答卷。"
   }
 ]

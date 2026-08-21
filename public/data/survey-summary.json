@@ -1,65 +1,335 @@
 {
-  "sampleSize": 86,
+  "sampleSize": 228,
+  "fieldSampleSize": 57,
   "familiarBridges": [
     {
       "label": "武汉长江大桥",
-      "value": 73
+      "value": 110,
+      "percent": 60.44,
+      "detail": "武汉长江大桥"
     },
     {
-      "label": "鹦鹉洲长江大桥",
-      "value": 34
+      "label": "武汉长江二桥",
+      "value": 32,
+      "percent": 17.58,
+      "detail": "武汉长江二桥"
     },
     {
-      "label": "杨泗港长江大桥",
-      "value": 28
+      "label": "鹦鹉洲大桥",
+      "value": 12,
+      "percent": 6.59,
+      "detail": "鹦鹉洲长江大桥"
     },
     {
-      "label": "长江二桥",
-      "value": 25
+      "label": "白沙洲大桥",
+      "value": 8,
+      "percent": 4.4,
+      "detail": "白沙洲长江大桥"
+    },
+    {
+      "label": "说不清或无",
+      "value": 8,
+      "percent": 4.4,
+      "detail": "说不清或没有特别熟悉的桥梁"
+    },
+    {
+      "label": "二七大桥",
+      "value": 6,
+      "percent": 3.3,
+      "detail": "二七长江大桥"
     },
     {
       "label": "其他桥梁",
-      "value": 19
+      "value": 6,
+      "percent": 3.3,
+      "detail": "杨泗港、晴川桥等其他桥梁"
     }
   ],
   "cognitionSources": [
     {
-      "label": "日常通勤",
-      "value": 31
+      "label": "短视频、社交媒体",
+      "value": 95,
+      "percent": 41.67,
+      "detail": "短视频、社交媒体或自媒体文章"
     },
     {
-      "label": "社交媒体",
-      "value": 24
+      "label": "新闻、电视、纪录片",
+      "value": 84,
+      "percent": 36.84,
+      "detail": "新闻网站、报纸、电视或纪录片"
     },
     {
-      "label": "课堂与资料",
-      "value": 18
+      "label": "出行与现场观察",
+      "value": 68,
+      "percent": 29.82,
+      "detail": "日常出行和现场观察"
     },
     {
-      "label": "城市游览",
-      "value": 13
+      "label": "地图、导航平台",
+      "value": 55,
+      "percent": 24.12,
+      "detail": "地图、导航或城市数字平台"
+    },
+    {
+      "label": "家人朋友讲述",
+      "value": 47,
+      "percent": 20.61,
+      "detail": "家人朋友讲述或地方记忆"
+    },
+    {
+      "label": "博物馆、展览",
+      "value": 45,
+      "percent": 19.74,
+      "detail": "博物馆、展览、讲解牌或城市活动"
+    },
+    {
+      "label": "很少主动了解",
+      "value": 32,
+      "percent": 14.04,
+      "detail": "很少主动了解"
+    },
+    {
+      "label": "学校课程、专业学习",
+      "value": 29,
+      "percent": 12.72,
+      "detail": "学校课程、工作或专业学习"
     }
   ],
-  "developmentUnderstanding": [
+  "valueRecognition": [
     {
-      "label": "交通便利",
-      "value": 67
+      "label": "城市形象与记忆",
+      "value": 207,
+      "percent": 84.06,
+      "mean": 4.237,
+      "detail": "桥梁及其故事是城市形象和共同记忆的一部分"
     },
     {
-      "label": "城市记忆",
-      "value": 54
+      "label": "跨江出行更方便",
+      "value": 210,
+      "percent": 81.9,
+      "mean": 4.262,
+      "detail": "使跨河或跨江出行更加方便"
     },
     {
-      "label": "工程技术",
-      "value": 43
+      "label": "到达目的地更便利",
+      "value": 206,
+      "percent": 81.55,
+      "mean": 4.257,
+      "detail": "更方便到达工作、学习、就医或休闲地点"
     },
     {
-      "label": "公共空间",
-      "value": 37
+      "label": "桥下空间活动场所",
+      "value": 207,
+      "percent": 79.23,
+      "mean": 4.097,
+      "detail": "桥梁周边或桥下空间提供有用活动场所"
     },
     {
-      "label": "区域协同",
-      "value": 29
+      "label": "建设维护精神",
+      "value": 210,
+      "percent": 79.05,
+      "mean": 4.152,
+      "detail": "建设与维护故事体现克服困难、踏实建设的精神"
+    }
+  ],
+  "techPriorities": [
+    {
+      "label": "实时交通信息",
+      "value": 62,
+      "percent": 27.19,
+      "detail": "实时交通信息和过江路线推荐"
+    },
+    {
+      "label": "汛情天气提醒",
+      "value": 49,
+      "percent": 21.49,
+      "detail": "汛情、水位、恶劣天气和空间关闭提醒"
+    },
+    {
+      "label": "问题上报反馈",
+      "value": 47,
+      "percent": 20.61,
+      "detail": "市民便捷上报问题与处理反馈"
+    },
+    {
+      "label": "结构监测预警",
+      "value": 45,
+      "percent": 19.74,
+      "detail": "桥梁结构监测、养护和风险预警"
+    },
+    {
+      "label": "无障碍慢行导航",
+      "value": 45,
+      "percent": 19.74,
+      "detail": "无障碍路线、慢行导航和清晰指引"
+    },
+    {
+      "label": "桥梁数字导览",
+      "value": 42,
+      "percent": 18.42,
+      "detail": "桥梁历史、工程知识和城市记忆数字导览"
+    },
+    {
+      "label": "智能照明监测",
+      "value": 41,
+      "percent": 17.98,
+      "detail": "智能照明、节能和环境监测"
+    },
+    {
+      "label": "暂不了解",
+      "value": 32,
+      "percent": 14.04,
+      "detail": "暂不了解或没有明确偏好"
+    }
+  ],
+  "improvementPriorities": [
+    {
+      "label": "安全检查与养护",
+      "value": 65,
+      "percent": 28.51,
+      "detail": "加强桥梁安全检查、日常养护和应急保障"
+    },
+    {
+      "label": "公共设施",
+      "value": 55,
+      "percent": 24.12,
+      "detail": "增加遮阴、座椅、卫生间、照明等公共设施"
+    },
+    {
+      "label": "公交过江效率",
+      "value": 50,
+      "percent": 21.93,
+      "detail": "提升公共交通过江效率和换乘衔接"
+    },
+    {
+      "label": "步行骑行连接",
+      "value": 43,
+      "percent": 18.86,
+      "detail": "完善桥头、桥下与滨水空间步行骑行连接"
+    },
+    {
+      "label": "信息导航反馈",
+      "value": 40,
+      "percent": 17.54,
+      "detail": "完善实时信息、导航和公众意见反馈"
+    },
+    {
+      "label": "环境问题治理",
+      "value": 30,
+      "percent": 13.16,
+      "detail": "减少噪声、积水、卫生等环境问题"
+    },
+    {
+      "label": "桥梁文化展示",
+      "value": 30,
+      "percent": 13.16,
+      "detail": "丰富桥梁历史、建设者故事和工程文化展示"
+    },
+    {
+      "label": "无障碍与适老",
+      "value": 26,
+      "percent": 11.4,
+      "detail": "改善无障碍通行和老幼友好设施"
+    },
+    {
+      "label": "暂无明确需求",
+      "value": 27,
+      "percent": 11.84,
+      "detail": "暂时没有明确需求"
+    }
+  ],
+  "openEndedThemes": [
+    {
+      "label": "安全、养护与韧性",
+      "value": 24,
+      "percent": 33.33,
+      "detail": "检查监测、桥面和护栏维护、结构耐久、人身安全、应急与防汛"
+    },
+    {
+      "label": "历史文化与桥梁精神",
+      "value": 24,
+      "percent": 33.33,
+      "detail": "工程史、共同记忆、地标、代际传承、奋斗精神、文化讲述"
+    },
+    {
+      "label": "交通通行与连接",
+      "value": 18,
+      "percent": 25,
+      "detail": "拥堵、车流组织、公交、共享出行、桥头接驳、通行便利与发展作用"
+    },
+    {
+      "label": "景观审美与艺术设计",
+      "value": 18,
+      "percent": 25,
+      "detail": "观景、夜景、灯光、装饰、外立面、艺术化设计"
+    },
+    {
+      "label": "信息服务与数字治理",
+      "value": 13,
+      "percent": 18.06,
+      "detail": "监测预警、实时交通、导航、标识、数字或多渠道传播"
+    },
+    {
+      "label": "公共空间与便民设施",
+      "value": 12,
+      "percent": 16.67,
+      "detail": "座椅、遮阴、垃圾桶、观景台、游客疏导、桥下及周边活动"
+    },
+    {
+      "label": "慢行与无障碍",
+      "value": 11,
+      "percent": 15.28,
+      "detail": "慢行连续性、人车分隔、上桥通道、缓坡、电梯、老人儿童需求"
+    },
+    {
+      "label": "个人经历与情感记忆",
+      "value": 10,
+      "percent": 13.89,
+      "detail": "通勤、旅行、步行、学习实践、家庭讲述等具体经历"
+    },
+    {
+      "label": "环境与特殊风险",
+      "value": 6,
+      "percent": 8.33,
+      "detail": "湿滑、积水、噪声、垃圾、汛情、水上活动风险"
+    }
+  ],
+  "openEndedFieldThemes": [
+    {
+      "label": "交通与慢行组织",
+      "value": 5,
+      "percent": 22.73,
+      "detail": "自行车道、拥堵治理、空间扩宽、电动车分流、桥梁供给"
+    },
+    {
+      "label": "公共设施与便民服务",
+      "value": 4,
+      "percent": 18.18,
+      "detail": "便利店、卫生间、钓鱼设施、自动售货机"
+    },
+    {
+      "label": "日常维护与环境治理",
+      "value": 4,
+      "percent": 18.18,
+      "detail": "破损路面、环境维护、卫生清扫"
+    },
+    {
+      "label": "桥梁文化与数字传播",
+      "value": 4,
+      "percent": 18.18,
+      "detail": "历史介绍、文化活动、建设者故事、数字导览"
+    },
+    {
+      "label": "正面体验与场所品质",
+      "value": 3,
+      "percent": 13.64,
+      "detail": "阴凉、美观、优秀桥下空间开发范例"
+    },
+    {
+      "label": "个人经历与记忆",
+      "value": 2,
+      "percent": 9.09,
+      "detail": "与地点的个人联系、语义待核的记忆线索"
     }
   ]
 }

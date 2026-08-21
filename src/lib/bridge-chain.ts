@@ -15,7 +15,6 @@ export const BRIDGE_CHAIN_IDS = [
   "wuhan-second-yangtze-river-bridge",
   "erqi-yangtze-river-bridge",
   "tianxingzhou-yangtze-river-bridge",
-  "qingshan-yangtze-river-bridge",
 ] as const;
 
 export function getBridgeChainCoordinates(bridges: BridgeFeatureCollection): Coordinate[] {

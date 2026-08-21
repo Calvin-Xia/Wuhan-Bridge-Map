@@ -287,9 +287,12 @@ main.app-shell
       nav[aria-label="桥梁目录"] > ul.bridge-list > li > button.bridge-item
       article.story-panel
     section.map-column
+      aside.map-legend > ul.map-legend-list > li > button.map-legend-entry
   section.evidence-band
     header.evidence-heading
-    figure.chart-block (repeated three times)
+    figure.chart-block (three + two + two, 共七张)
+    section.voice-band
+      ul.voice-list (网络版 / 现场版两组)
 ```
 
 `story-rail` 与 `map-column` 是同一工作区的直接子元素。目录中 `li > button` 直接表达可选桥梁，不能再插入“卡片外壳”或装饰性 `div`。
@@ -312,14 +315,14 @@ main.app-shell
 ```css
 .workspace {
   display: grid;
-  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+  grid-template-columns: minmax(22rem, 0.72fr) minmax(0, 1fr);
   gap: clamp(0.75rem, 1.5vw, 1.25rem);
   min-height: 0;
 }
 
-.evidence-grid {
+.chart-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.9fr) minmax(0, 1.05fr);
   gap: clamp(1.25rem, 3vw, 2.5rem);
 }
 ```
@@ -387,7 +390,7 @@ const observer = new IntersectionObserver(
 document.querySelectorAll<HTMLElement>(".reveal").forEach((element) => observer.observe(element));
 ```
 
-该 reveal 只用于证据标题和三个图表区，触发一次后停止观察。禁止视差、滚动劫持、固定区段和全局滚动监听。
+该 reveal 只用于证据标题和七个图表区，触发一次后停止观察。禁止视差、滚动劫持、固定区段和全局滚动监听。
 
 ### Hover, Focus and Selection
 
@@ -430,7 +433,7 @@ document.querySelectorAll<HTMLElement>(".reveal").forEach((element) => observer.
 ### Don't
 
 - ❌ 不做框中套框、卡片中再放卡片，或为排版添加无意义 `div`。
-- ❌ 不将三个图表制作成相同悬浮卡片。
+- ❌ 不将七个图表制作成相同悬浮卡片。
 - ❌ 不使用紫蓝霓虹、通用玻璃拟态或大面积模糊。
 - ❌ 不使用标题渐变、文字投影、装饰性大写标签或编号眉题。
 - ❌ 不使用滚动进度条、视差、滚动劫持、固定滚动叙事或全局自定义光标。
@@ -481,7 +484,7 @@ const THEME_CHANGE_EVENT = "bridge-theme-change";
 
 | Name | Width | Key Changes |
 | --- | --- | --- |
-| Desktop | `> 980px` | 左侧目录与故事区固定宽度，地图占主区域，证据图表为三列。 |
+| Desktop | `> 980px` | 左侧目录与故事区固定宽度，地图占主区域，证据图表为三列 + 两列 + 两列（共七张）。 |
 | Tablet | `561px-980px` | 地图置于上方，目录与故事区在下方纵向排列，图表单列。 |
 | Mobile | `<= 560px` | 标题和指标纵向排列，目录可横向滑动，地图最小高度 32rem，所有证据区单列。 |
 
@@ -499,7 +502,7 @@ const THEME_CHANGE_EVENT = "bridge-theme-change";
     min-height: 62vh;
   }
 
-  .evidence-grid {
+  .chart-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -526,3 +529,14 @@ const THEME_CHANGE_EVENT = "bridge-theme-change";
   }
 }
 ```
+
+## 11. Data Integration Upgrade (2026-08)
+
+调研材料（两份问卷分析、开放题质性分析、三组工作总结）已整合进数据层，本页现役事实如下：
+
+- **桥梁**：8 座（青山长江大桥已从全部数据、路线与链线校验中移除）。点位调研状态按现场样本更新：已实地调研 7 座、待实地核验 1 座（天兴洲）、资料整理中 1 座（青山已删，实际为 8 座清单）。
+- **问卷证据**：`survey-summary.json` 聚合网络版（228 份）与现场版（57 份）；图表 7 张——最熟悉桥梁、信息来源、公共价值、科技治理期待、近期改善优先级、网络版/现场版开放题主题。多选型数据用横向条形图（饼图会误导为构成比），最高项用证据色高亮，tooltip 展示完整题项、人数、占比与均值。
+- **市民之声**：`voices.json` 收录无法归位到单一桥梁的开放回答引语（网络版 2 条、现场版 17 条），按问卷分两组以文档式列表行呈现，全部匿名。
+- **故事面板**：每个点位包含现场观察、引用（带出处标签）、问卷与开放题证据列表、分段加粗的调研分析（`**重点**` 标记渲染为 `<strong>`）。
+- **路线**：调研路线命名改为「组 A/B/C + 调研组名」，属性含 `group`/`date`/`sampleCount`；地图左上角图例为可点击按钮，点击聚焦该线路并让左侧跟随到线路第一座桥；路线 hover 加粗提亮（`setPaintProperty` 整层，不使用 feature-state）。
+- **地图浮层**：图例、状态提示使用实色表面 + 1px 边框（不透明，避免底图文字透出）；错误提示只在源/样式级错误时显示，瓦片级错误不打扰用户。

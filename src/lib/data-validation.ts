@@ -45,6 +45,9 @@ export interface RouteFeature {
     mode: string;
     color: string;
     summary: string;
+    group?: string;
+    date?: string;
+    sampleCount?: number;
   };
 }
 
@@ -60,8 +63,11 @@ export interface StoryRecord {
   question: string;
   fieldObservation: string;
   interviewQuote: string;
-  quoteConsent: "anonymous" | "public" | "not-collected";
-  analysis: string;
+  quoteLabel?: string;
+  quoteConsent: "anonymous" | "public" | "not-collected" | "team-record";
+  surveyEvidence?: string[];
+  /** Analysis paragraphs; `**text**` marks inline emphasis. */
+  analysis: string[];
   ideologicalLink: string;
   evidenceLevel: string;
 }
@@ -75,16 +81,33 @@ export interface SourceRecord {
   note?: string;
 }
 
+export interface VoiceRecord {
+  id: string;
+  survey: "online" | "field";
+  quote: string;
+  theme: string;
+  source: string;
+  note?: string;
+}
+
 export interface SurveyMetric {
   label: string;
   value: number;
+  percent?: number;
+  mean?: number;
+  detail?: string;
 }
 
 export interface SurveySummary {
   sampleSize: number;
+  fieldSampleSize: number;
   familiarBridges: SurveyMetric[];
   cognitionSources: SurveyMetric[];
-  developmentUnderstanding: SurveyMetric[];
+  valueRecognition: SurveyMetric[];
+  techPriorities: SurveyMetric[];
+  improvementPriorities: SurveyMetric[];
+  openEndedThemes: SurveyMetric[];
+  openEndedFieldThemes: SurveyMetric[];
 }
 
 export interface ResearchDataset {
@@ -93,6 +116,7 @@ export interface ResearchDataset {
   sources: SourceRecord[];
   routes?: RouteFeatureCollection;
   survey?: SurveySummary;
+  voices?: VoiceRecord[];
 }
 
 const WUHAN_BOUNDS = {
@@ -167,6 +191,20 @@ export function validateRouteCollection(routes: RouteFeatureCollection): string[
         issues.push(`${prefix}.geometry.coordinates[${coordinateIndex}] must be [longitude, latitude] near Wuhan`);
       }
     });
+
+    if (feature.properties.sampleCount !== undefined) {
+      if (!Number.isInteger(feature.properties.sampleCount) || feature.properties.sampleCount < 0) {
+        issues.push(`${prefix}.properties.sampleCount must be a non-negative integer`);
+      }
+    }
+
+    if (feature.properties.group !== undefined && !feature.properties.group.trim()) {
+      issues.push(`${prefix}.properties.group must be a non-empty string`);
+    }
+
+    if (feature.properties.date !== undefined && !feature.properties.date.trim()) {
+      issues.push(`${prefix}.properties.date must be a non-empty string`);
+    }
   });
 
   return issues;
@@ -179,7 +217,19 @@ export function validateSurveySummary(survey: SurveySummary): string[] {
     issues.push("survey.sampleSize must be a positive integer");
   }
 
-  for (const key of ["familiarBridges", "cognitionSources", "developmentUnderstanding"] as const) {
+  if (!Number.isInteger(survey.fieldSampleSize) || survey.fieldSampleSize <= 0) {
+    issues.push("survey.fieldSampleSize must be a positive integer");
+  }
+
+  for (const key of [
+    "familiarBridges",
+    "cognitionSources",
+    "valueRecognition",
+    "techPriorities",
+    "improvementPriorities",
+    "openEndedThemes",
+    "openEndedFieldThemes",
+  ] as const) {
     if (survey[key].length === 0) {
       issues.push(`survey.${key} must include at least one metric`);
     }
@@ -192,8 +242,51 @@ export function validateSurveySummary(survey: SurveySummary): string[] {
       if (metric.value < 0) {
         issues.push(`survey.${key}[${index}].value must be non-negative`);
       }
+
+      if (metric.percent !== undefined && (metric.percent < 0 || metric.percent > 100)) {
+        issues.push(`survey.${key}[${index}].percent must be between 0 and 100`);
+      }
+
+      if (metric.mean !== undefined && (metric.mean < 1 || metric.mean > 5)) {
+        issues.push(`survey.${key}[${index}].mean must be between 1 and 5`);
+      }
     });
   }
+
+  return issues;
+}
+
+export function validateVoices(voices: VoiceRecord[]): string[] {
+  const issues: string[] = [];
+  const ids = new Set<string>();
+
+  voices.forEach((voice, index) => {
+    const prefix = `voices[${index}]`;
+
+    if (!voice.id.trim()) {
+      issues.push(`${prefix}.id is required`);
+    } else if (ids.has(voice.id)) {
+      issues.push(`${prefix}.id must be unique: ${voice.id}`);
+    } else {
+      ids.add(voice.id);
+    }
+
+    if (!voice.quote.trim()) {
+      issues.push(`${prefix}.quote is required`);
+    }
+
+    if (!voice.theme.trim()) {
+      issues.push(`${prefix}.theme is required`);
+    }
+
+    if (!voice.source.trim()) {
+      issues.push(`${prefix}.source is required`);
+    }
+
+    if (voice.note !== undefined && !voice.note.trim()) {
+      issues.push(`${prefix}.note must be a non-empty string`);
+    }
+  });
 
   return issues;
 }
@@ -203,6 +296,7 @@ export function validateResearchDataset(dataset: ResearchDataset): string[] {
     ...validateBridgeCollection(dataset.bridges),
     ...(dataset.routes ? validateRouteCollection(dataset.routes) : []),
     ...(dataset.survey ? validateSurveySummary(dataset.survey) : []),
+    ...(dataset.voices ? validateVoices(dataset.voices) : []),
   ];
 
   if (dataset.routes) {
@@ -233,9 +327,31 @@ export function validateResearchDataset(dataset: ResearchDataset): string[] {
       issues.push(`stories[${index}].question is required`);
     }
 
-    if (!story.analysis.trim()) {
-      issues.push(`stories[${index}].analysis is required`);
+    if (story.analysis.length === 0) {
+      issues.push(`stories[${index}].analysis must include at least one paragraph`);
     }
+
+    story.analysis.forEach((paragraph, paragraphIndex) => {
+      if (!paragraph.trim()) {
+        issues.push(`stories[${index}].analysis[${paragraphIndex}] must be a non-empty paragraph`);
+      }
+    });
+
+    if (story.quoteConsent !== "not-collected") {
+      if (!story.interviewQuote.trim()) {
+        issues.push(`stories[${index}].interviewQuote is required unless quoteConsent is "not-collected"`);
+      }
+
+      if (!story.quoteLabel?.trim()) {
+        issues.push(`stories[${index}].quoteLabel is required for quoted stories`);
+      }
+    }
+
+    story.surveyEvidence?.forEach((evidence, evidenceIndex) => {
+      if (!evidence.trim()) {
+        issues.push(`stories[${index}].surveyEvidence[${evidenceIndex}] must be a non-empty string`);
+      }
+    });
   });
 
   return issues;

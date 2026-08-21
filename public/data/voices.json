@@ -1,0 +1,154 @@
+[
+  {
+    "id": "voice-online-connection",
+    "survey": "online",
+    "quote": "桥梁的连接作用，在这一刻具象化了。",
+    "theme": "个人经历与情感记忆",
+    "source": "网络版问卷第 20 题",
+    "note": "受访者回忆暑期随在武汉工作的父母出行：乘车时觉得家与工作地点很近，步行时又感到大桥很长。"
+  },
+  {
+    "id": "voice-online-lifecycle",
+    "survey": "online",
+    "quote": "未来的桥梁行业将更加注重“建养并重、科技赋能、安全韧性”。",
+    "theme": "安全、养护与韧性",
+    "source": "网络版问卷第 20 题",
+    "note": "受访者对桥梁全生命周期治理与技术路径的概括，与封闭题中“安全养护居改善首位”相互印证。"
+  },
+  {
+    "id": "voice-field-traffic-tech",
+    "survey": "field",
+    "quote": "武汉桥梁早晚高峰太容易堵车了，希望通过现有的高科技手段加以治理和改善。",
+    "theme": "交通与慢行组织",
+    "source": "现场版问卷第 18 题",
+    "note": "问题＋建议型回答：拥堵被感知为最日常的问题，解决方式则指向科技治理。"
+  },
+  {
+    "id": "voice-field-bike-lane",
+    "survey": "field",
+    "quote": "多一些自行车道。",
+    "theme": "交通与慢行组织",
+    "source": "现场版问卷第 18 题",
+    "note": "慢行网络补充诉求，与封闭题中“慢行连接改善”选择 28.07% 相呼应。"
+  },
+  {
+    "id": "voice-field-e-bike",
+    "survey": "field",
+    "quote": "电瓶车分流。",
+    "theme": "交通与慢行组织",
+    "source": "现场版问卷第 18 题",
+    "note": "电动车与步行人群的冲突需要更清晰的空间组织。"
+  },
+  {
+    "id": "voice-field-more-bridges",
+    "survey": "field",
+    "quote": "交通有点堵 多盖几座桥。",
+    "theme": "交通与慢行组织",
+    "source": "现场版问卷第 18 题",
+    "note": "简短但直接：公众对跨江通行容量的诉求，以“增加供给”的方式表达。"
+  },
+  {
+    "id": "voice-field-store",
+    "survey": "field",
+    "quote": "建议增设便利店。",
+    "theme": "公共设施与便民服务",
+    "source": "现场版问卷第 18 题",
+    "note": "希望长时间停留、亲子陪伴与休闲观景时获得低成本、就近的基本支持。"
+  },
+  {
+    "id": "voice-field-toilet",
+    "survey": "field",
+    "quote": "卫生间更完善一点。",
+    "theme": "公共设施与便民服务",
+    "source": "现场版问卷第 18 题",
+    "note": "基本设施的数量、分布与持续可用性，是现场最常被提出的改进方向。"
+  },
+  {
+    "id": "voice-field-vending",
+    "survey": "field",
+    "quote": "自动售货机希望补充。",
+    "theme": "公共设施与便民服务",
+    "source": "现场版问卷第 18 题",
+    "note": "便民服务诉求的具体化：不追求大型商业，而是就近可得。"
+  },
+  {
+    "id": "voice-field-shade",
+    "survey": "field",
+    "quote": "全程阴凉。",
+    "theme": "正面体验与场所品质",
+    "source": "现场版问卷第 18 题",
+    "note": "正面观察。与封闭题中“遮阴、座椅”均值最低形成对照：已有成效与改善需求可以并存。"
+  },
+  {
+    "id": "voice-field-beautiful",
+    "survey": "field",
+    "quote": "非常好看美丽。",
+    "theme": "正面体验与场所品质",
+    "source": "现场版问卷第 18 题",
+    "note": "景观审美的直接肯定，说明开放题不应只被读成问题清单。"
+  },
+  {
+    "id": "voice-field-road-repair",
+    "survey": "field",
+    "quote": "损坏的路及时修。",
+    "theme": "日常维护与环境治理",
+    "source": "现场版问卷第 18 题",
+    "note": "持续巡查与及时维修，是强制定题之外容易被忽略的日常治理需求。"
+  },
+  {
+    "id": "voice-field-cleaning",
+    "survey": "field",
+    "quote": "卫生打扫频率更多一点。",
+    "theme": "日常维护与环境治理",
+    "source": "现场版问卷第 18 题",
+    "note": "清扫频率与垃圾分类直接决定停留体验。"
+  },
+  {
+    "id": "voice-field-env-care",
+    "survey": "field",
+    "quote": "环境更好的维护。",
+    "theme": "日常维护与环境治理",
+    "source": "现场版问卷第 18 题",
+    "note": "开放题中“维护”出现 5 次，而强制单选只有 5.26%——开放题补充了细碎却高频的影响体验的问题。"
+  },
+  {
+    "id": "voice-field-culture-activity",
+    "survey": "field",
+    "quote": "补充一些历史文化相关活动。",
+    "theme": "桥梁文化与数字传播",
+    "source": "现场版问卷第 18 题",
+    "note": "文化诉求不限于讲解牌，也包括参与性活动。"
+  },
+  {
+    "id": "voice-field-culture-add",
+    "survey": "field",
+    "quote": "增加桥梁文化。",
+    "theme": "桥梁文化与数字传播",
+    "source": "现场版问卷第 18 题",
+    "note": "与封闭题中“指引和文化介绍”负向率最高（13.21%）相互印证：文化价值认同高，可见载体不足。"
+  },
+  {
+    "id": "voice-field-ankang",
+    "survey": "field",
+    "quote": "陕西安康汉江是长江第一大支流，大桥也是横跨汉江，同样缺少数字化介绍和历史介绍，对于文化传播不是很方便。",
+    "theme": "桥梁文化与数字传播",
+    "source": "现场版问卷第 18 题",
+    "note": "外地比较经验：缺少数字化与历史介绍并非武汉独有，文化传播载体建设具有普遍性。"
+  },
+  {
+    "id": "voice-field-builders",
+    "survey": "field",
+    "quote": "丰富桥梁历史，建设者故事。工程文化展示。加强安全桥梁监测，日常养护和应急保障。",
+    "theme": "桥梁文化与数字传播",
+    "source": "现场版问卷第 18 题",
+    "note": "复合建议：文化展示与安全养护在同一句话里——正是开放题两大并列主题的缩影。"
+  },
+  {
+    "id": "voice-field-live-here",
+    "survey": "field",
+    "quote": "我之前总是住在这里。",
+    "theme": "个人经历与记忆",
+    "source": "现场版问卷第 18 题",
+    "note": "与地点的生活联系，句意略有省略；这类短句说明桥下空间也是个人记忆的容器。"
+  }
+]

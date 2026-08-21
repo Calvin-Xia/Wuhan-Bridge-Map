@@ -41,9 +41,9 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
           <p class="page-summary">{description}</p>
           <div class="header-side">
             <dl class="metric-strip" aria-label="项目指标">
-              <div><dt>座桥</dt><dd><strong id="bridge-count">9</strong></dd><small class="metric-code">BRIDGES</small></div>
+              <div><dt>座桥</dt><dd><strong id="bridge-count">8</strong></dd><small class="metric-code">BRIDGES</small></div>
               <div><dt>条路线</dt><dd><strong>4</strong></dd><small class="metric-code">ROUTES</small></div>
-              <div><dt>类证据</dt><dd><strong>4</strong></dd><small class="metric-code">EVIDENCE</small></div>
+              <div><dt>类证据</dt><dd><strong>5</strong></dd><small class="metric-code">EVIDENCE</small></div>
             </dl>
             <button
               id="theme-toggle"
@@ -77,6 +77,11 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
 
           <section class="map-column" aria-label="交互地图">
             <div id="bridge-map" class="map-canvas"></div>
+            <aside class="map-legend" aria-label="路线图例">
+              <p class="map-legend-title">路线图例</p>
+              <ul id="map-legend-list" class="map-legend-list" aria-busy="true"></ul>
+              <p class="map-legend-note">点位间为直线示意，非实际步行路径。</p>
+            </aside>
             <p id="map-status" class="map-status" role="status">地图与点位数据载入中</p>
           </section>
         </section>
@@ -84,10 +89,13 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
 
       <section class="evidence-band" aria-label="问卷与调研证据">
         <header class="evidence-heading reveal">
-          <p class="section-label">问卷快照</p>
-          <h2>青年认知、桥梁记忆与城市获得感</h2>
+          <p class="section-label">问卷与开放题证据</p>
+          <h2>认知、价值与治理期待：两份问卷的交叉印证</h2>
+          <p class="evidence-lead">
+            网络版《桥梁、城市与公众生活调查》230 份进入、228 份有效，覆盖武汉及全国；现场版《武汉桥梁与桥下公共空间公众体验调查》59 份提交、57 份有效，覆盖 7 座桥梁点位。样本均为便利抽样，结果用于描述本次受访者，不作总体推断。
+          </p>
         </header>
-        <section class="chart-grid" aria-label="问卷图表">
+        <section class="chart-grid" aria-label="认知与价值问卷图表">
           <figure class="chart-block reveal">
             <figcaption>
               <span class="chart-icon" aria-hidden="true">
@@ -95,6 +103,7 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
               </span>
               <span>最熟悉的桥梁</span>
             </figcaption>
+            <p class="chart-note">网络版 n=182（与武汉有到访联系者）；现场版 57 份中武汉长江大桥同样居首（57.89%）。</p>
             <div id="chart-familiar" class="chart-canvas" role="img" aria-label="最熟悉桥梁柱状图"></div>
           </figure>
           <figure class="chart-block reveal">
@@ -102,19 +111,82 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
               <span class="chart-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false"><path d="M12 3a9 9 0 1 0 9 9h-9V3Z" /><path d="M15 3.5A9 9 0 0 1 20.5 9H15V3.5Z" /></svg>
               </span>
-              <span>认知来源</span>
+              <span>桥梁信息来源</span>
             </figcaption>
-            <div id="chart-sources" class="chart-canvas" role="img" aria-label="桥梁认知来源饼图"></div>
+            <p class="chart-note">网络版 n=228，最多选 4 项，各项占比之和可超过 100%。</p>
+            <div id="chart-sources" class="chart-canvas" role="img" aria-label="桥梁信息来源横向条形图"></div>
           </figure>
           <figure class="chart-block reveal">
             <figcaption>
               <span class="chart-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false"><path d="m4 16 5-5 4 3 7-8M4 20h16" /></svg>
               </span>
-              <span>城市发展理解</span>
+              <span>桥梁公共价值认同</span>
             </figcaption>
-            <div id="chart-understanding" class="chart-canvas" role="img" aria-label="城市发展理解柱状图"></div>
+            <p class="chart-note">网络版 n=228，有效评分正向率（4—5 分占比），悬浮查看均值。</p>
+            <div id="chart-value" class="chart-canvas" role="img" aria-label="桥梁公共价值认同柱状图"></div>
           </figure>
+        </section>
+        <section class="chart-grid chart-grid--pair" aria-label="治理需求问卷图表">
+          <figure class="chart-block reveal">
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="1.4" /><path d="M8.7 8.7a4.7 4.7 0 0 1 6.6 0M5.6 5.6a9 9 0 0 1 12.8 0" /></svg>
+              </span>
+              <span>科技治理期待</span>
+            </figcaption>
+            <p class="chart-note">网络版 n=228，限选 2 项。</p>
+            <div id="chart-tech" class="chart-canvas" role="img" aria-label="科技治理期待横向条形图"></div>
+          </figure>
+          <figure class="chart-block reveal">
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><rect x="6" y="4" width="12" height="17" rx="2" /><path d="M9.5 4V2.5h5V4M9.5 13.5l2 2 3.5-4" /></svg>
+              </span>
+              <span>近期改善优先级</span>
+            </figcaption>
+            <p class="chart-note">网络版 n=228，限选 2 项。</p>
+            <div id="chart-improve" class="chart-canvas" role="img" aria-label="近期改善优先级柱状图"></div>
+          </figure>
+        </section>
+        <section class="chart-grid chart-grid--pair" aria-label="开放题主题图表">
+          <figure class="chart-block reveal">
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11h-6l-4 3v-3H4V5Z" /></svg>
+              </span>
+              <span>开放题主题：网络版</span>
+            </figcaption>
+            <p class="chart-note">第 20 题 72 条实质回答（占 228 份的 31.58%），多重主题编码，占比之和可超过 100%。</p>
+            <div id="chart-open-online" class="chart-canvas" role="img" aria-label="网络版开放题主题横向条形图"></div>
+          </figure>
+          <figure class="chart-block reveal">
+            <figcaption>
+              <span class="chart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11h-6l-4 3v-3H4V5Z" /></svg>
+              </span>
+              <span>开放题主题：现场版</span>
+            </figcaption>
+            <p class="chart-note">第 18 题 22 条实质回答（占 57 份的 38.60%），每条仅计一个主主题；原始记录未附点位。</p>
+            <div id="chart-open-field" class="chart-canvas" role="img" aria-label="现场版开放题主题横向条形图"></div>
+          </figure>
+        </section>
+        <section class="voice-band" aria-label="市民之声">
+          <header class="evidence-heading reveal">
+            <p class="section-label">市民之声</p>
+            <h2>无法归位到单一桥梁的开放回答</h2>
+            <p class="evidence-lead">
+              现场版第 18 题原始记录未附点位，网络版第 20 题多数回答未点名具体桥梁，因此这些声音以整体方式呈现：主题频次与个人叙事同等重要，引用均经匿名处理。
+            </p>
+          </header>
+          <div class="voice-group">
+            <h3>网络版问卷 · 第 20 题（72 条实质回答）</h3>
+            <ul id="voice-list-online" class="voice-list" aria-busy="true"></ul>
+          </div>
+          <div class="voice-group">
+            <h3>现场版问卷 · 第 18 题（22 条实质回答）</h3>
+            <ul id="voice-list-field" class="voice-list" aria-busy="true"></ul>
+          </div>
         </section>
       </section>
     </main>
@@ -122,7 +194,12 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
     <script>
       void (async () => {
         await import("../scripts/theme");
-        await Promise.all([import("../scripts/map-app"), import("../scripts/charts"), import("../scripts/reveal")]);
+        await Promise.all([
+          import("../scripts/map-app"),
+          import("../scripts/charts"),
+          import("../scripts/voices"),
+          import("../scripts/reveal"),
+        ]);
       })().catch((error) => {
         console.error("Failed to load interactive modules", error);
       });

@@ -46,8 +46,8 @@ describe("MapLibre bridge-chain contract", () => {
       filter: ["==", ["get", "id"], BRIDGE_CHAIN_ROUTE_ID],
       paint: {
         "line-color": "#edf1ed",
-        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 8, 14, 13],
-        "line-opacity": 0.9,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 5, 14, 8],
+        "line-opacity": 0.55,
         "line-blur": 1.2,
       },
     });
@@ -62,7 +62,7 @@ describe("MapLibre bridge-chain contract", () => {
       paint: {
         "line-color": ["get", "color"],
         "line-width": ["interpolate", ["linear"], ["zoom"], 9, 3, 14, 6],
-        "line-opacity": 0.92,
+        "line-opacity": 0.75,
         "line-dasharray": [1.2, 1.4],
       },
     });
@@ -106,23 +106,41 @@ describe("MapLibre bridge-chain contract", () => {
 
 describe("dashboard interface contract", () => {
   it("provides one semantic decorative icon per chart", () => {
-    expect(page.match(/class="chart-icon"/g)?.length).toBe(3);
-    expect(page.match(/<svg\b/g)?.length).toBe(3);
+    expect(page.match(/class="chart-icon"/g)?.length).toBe(7);
+    expect(page.match(/<svg\b/g)?.length).toBe(7);
     expect(page).toContain('aria-hidden="true"');
   });
 
   it("keeps the project metrics synchronized with the dataset", () => {
-    expect(page).toContain('<strong id="bridge-count">9</strong>');
+    expect(page).toContain('<strong id="bridge-count">8</strong>');
     expect(page).toMatch(/<dt>条路线<\/dt><dd><strong>4<\/strong><\/dd>/);
   });
 
-  it("declares the balanced workspace and one-shot chart icon animation", () => {
+  it("declares the balanced workspace, three-column evidence grid and paired chart row", () => {
     expect(styles).toContain("grid-template-columns: minmax(22rem, 0.72fr) minmax(0, 1fr)");
-    expect(styles).toContain("height: clamp(28rem, 48vh, 34rem)");
+    expect(styles).toContain("height: clamp(34rem, 58vh, 42rem)");
     expect(styles).toContain("grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.9fr) minmax(0, 1.05fr)");
+    expect(styles).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
     expect(styles).toContain(".chart-icon");
     expect(styles).toContain(".chart-icon svg");
     expect(styles).toContain("chart-icon-pop");
     expect(styles).toContain(".reveal.is-visible .chart-icon");
+  });
+
+  it("declares the anonymized voice list for unplaceable open answers", () => {
+    expect(page).toContain('aria-label="市民之声"');
+    expect(page).toContain('id="voice-list-online"');
+    expect(page).toContain('id="voice-list-field"');
+    expect(styles).toContain(".voice-quote");
+    expect(styles).toContain(".voice-meta");
+  });
+
+  it("declares the map route legend and its document-style list", () => {
+    expect(page).toContain('aria-label="路线图例"');
+    expect(page).toContain('id="map-legend-list"');
+    expect(page).toContain("点位间为直线示意，非实际步行路径");
+    expect(styles).toContain(".map-legend");
+    expect(styles).toContain(".map-legend-swatch--dashed");
+    expect(styles).toContain(".map-legend-entry");
   });
 });

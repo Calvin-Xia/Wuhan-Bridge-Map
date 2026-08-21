@@ -59,8 +59,8 @@ function createBridgeChainHaloLayer(theme: MapLayerTheme): AddLayerObject {
     filter: ["==", ["get", "id"], BRIDGE_CHAIN_ROUTE_ID],
     paint: {
       "line-color": theme.chainHalo,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 9, 8, 14, 13],
-      "line-opacity": 0.9,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 9, 5, 14, 8],
+      "line-opacity": 0.55,
       "line-blur": 1.2,
     },
   };
@@ -75,7 +75,7 @@ function createBridgeChainLayer(): AddLayerObject {
     paint: {
       "line-color": ["get", "color"],
       "line-width": ["interpolate", ["linear"], ["zoom"], 9, 3, 14, 6],
-      "line-opacity": 0.92,
+      "line-opacity": 0.75,
       "line-dasharray": [1.2, 1.4],
     },
   };

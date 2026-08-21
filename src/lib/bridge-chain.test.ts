@@ -55,7 +55,7 @@ function getProductionChainRoute() {
 }
 
 describe("bridge chain", () => {
-  it("defines the approved nine-bridge order", () => {
+  it("defines the approved eight-bridge order", () => {
     expect(BRIDGE_CHAIN_IDS).toEqual([
       "qingchuan-bridge",
       "wuhan-yangtze-river-bridge",
@@ -65,12 +65,11 @@ describe("bridge chain", () => {
       "wuhan-second-yangtze-river-bridge",
       "erqi-yangtze-river-bridge",
       "tianxingzhou-yangtze-river-bridge",
-      "qingshan-yangtze-river-bridge",
     ]);
   });
 
-  it("keeps the production bridge inventory and 二七 research placeholders complete", () => {
-    expect(bridges.features).toHaveLength(9);
+  it("keeps the production bridge inventory and 二七 research records complete", () => {
+    expect(bridges.features).toHaveLength(8);
     expect(bridges.features.map((bridge) => bridge.properties.id).sort()).toEqual(
       [...BRIDGE_CHAIN_IDS].sort(),
     );
@@ -86,11 +85,11 @@ describe("bridge chain", () => {
       name: "二七长江大桥",
       openedYear: 2011,
       bridgeType: "公路桥",
-      researchStatus: "资料整理中",
-      sourceIds: ["source-bridge-catalog", "field-template"],
+      researchStatus: "已实地调研",
+      sourceIds: ["source-bridge-catalog", "source-survey-field", "source-team-summary"],
     });
-    expect(erqi.properties.mediaIds.length).toBeGreaterThan(0);
-    expect(erqi.properties.shortStory).toContain("资料整理中");
+    expect(erqi.properties.mediaIds).toEqual([]);
+    expect(erqi.properties.shortStory).toContain("5 份问卷");
 
     const erqiStory = stories.find((story) => story.bridgeId === "erqi-yangtze-river-bridge");
     expect(erqiStory).toBeDefined();
@@ -99,8 +98,9 @@ describe("bridge chain", () => {
     }
 
     expect(erqiStory.bridgeId).toBe("erqi-yangtze-river-bridge");
-    expect(erqiStory.quoteConsent).toBe("anonymous");
-    expect(`${erqiStory.fieldObservation}\n${erqiStory.analysis}`).toContain("资料整理中");
+    expect(erqiStory.quoteConsent).toBe("team-record");
+    expect(erqiStory.quoteLabel).toBe("团队现场调研记录");
+    expect(`${erqiStory.fieldObservation}\n${erqiStory.analysis.join("")}`).toContain("钓鱼");
   });
 
   it("keeps existing route points synchronized with production bridge centers", () => {
@@ -118,7 +118,6 @@ describe("bridge chain", () => {
       "wuhan-second-yangtze-river-bridge",
       "erqi-yangtze-river-bridge",
       "tianxingzhou-yangtze-river-bridge",
-      "qingshan-yangtze-river-bridge",
     ]);
   });
 
@@ -142,10 +141,10 @@ describe("bridge chain", () => {
     if (!truncatedChainRoute) {
       throw new Error(`Production route missing: ${BRIDGE_CHAIN_ROUTE_ID}`);
     }
-    truncatedChainRoute.geometry.coordinates = chainRoute.geometry.coordinates.slice(0, 8);
+    truncatedChainRoute.geometry.coordinates = chainRoute.geometry.coordinates.slice(0, 7);
 
     expect(validateBridgeChain(bridges, truncatedRoutes)).toEqual([
-      "route-bridge-chain must contain 9 coordinates",
+      "route-bridge-chain must contain 8 coordinates",
     ]);
   });
 

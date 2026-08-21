@@ -1,21 +1,13 @@
 import * as echarts from "echarts/core";
-import { BarChart, PieChart } from "echarts/charts";
-import {
-  GridComponent,
-  LegendComponent,
-  TooltipComponent,
-} from "echarts/components";
+import { BarChart } from "echarts/charts";
+import { AriaComponent, GridComponent, TooltipComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { ECharts } from "echarts/core";
 import type { SurveyMetric, SurveySummary } from "../lib/data-validation";
-import {
-  createBarChartOption,
-  createPieChartOption,
-  type ChartTheme,
-} from "../lib/chart-options";
+import { createBarChartOption, type BarChartConfig, type ChartTheme } from "../lib/chart-options";
 import { THEME_CHANGE_EVENT } from "../lib/theme-preferences";
 
-echarts.use([BarChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
+echarts.use([BarChart, GridComponent, TooltipComponent, AriaComponent, CanvasRenderer]);
 
 void initCharts();
 
@@ -23,9 +15,36 @@ async function initCharts() {
   const survey = await fetchJson<SurveySummary>("/data/survey-summary.json");
   const theme = readTheme();
   const charts = [
-    mountBarChart("chart-familiar", survey.familiarBridges, "accent", theme),
-    mountPieChart("chart-sources", survey.cognitionSources, theme),
-    mountBarChart("chart-understanding", survey.developmentUnderstanding, "evidence", theme),
+    mountBarChart("chart-familiar", survey.familiarBridges, "accent", theme, {
+      highlightTop: true,
+      showValueLabels: true,
+    }),
+    mountBarChart("chart-sources", survey.cognitionSources, "accent", theme, {
+      horizontal: true,
+      showValueLabels: true,
+    }),
+    mountBarChart("chart-value", survey.valueRecognition, "evidence", theme, {
+      showValueLabels: true,
+    }),
+    mountBarChart("chart-tech", survey.techPriorities, "accent", theme, {
+      horizontal: true,
+      highlightTop: true,
+      showValueLabels: true,
+    }),
+    mountBarChart("chart-improve", survey.improvementPriorities, "accent", theme, {
+      highlightTop: true,
+      showValueLabels: true,
+    }),
+    mountBarChart("chart-open-online", survey.openEndedThemes, "accent", theme, {
+      horizontal: true,
+      highlightTop: true,
+      showValueLabels: true,
+    }),
+    mountBarChart("chart-open-field", survey.openEndedFieldThemes, "accent", theme, {
+      horizontal: true,
+      highlightTop: true,
+      showValueLabels: true,
+    }),
   ].filter((chart): chart is ChartBinding => Boolean(chart));
 
   window.addEventListener("resize", () => {
@@ -49,24 +68,19 @@ type ChartBinding = {
 
 type BarTone = "accent" | "evidence";
 
-function mountBarChart(id: string, data: SurveyMetric[], tone: BarTone, theme: ChartTheme): ChartBinding | null {
+function mountBarChart(
+  id: string,
+  data: SurveyMetric[],
+  tone: BarTone,
+  theme: ChartTheme,
+  config: BarChartConfig,
+): ChartBinding | null {
   const element = document.getElementById(id);
   if (!element) return null;
 
   const chart = echarts.init(element);
   const getOption = (nextTheme: ChartTheme) =>
-    createBarChartOption(data, tone === "accent" ? nextTheme.accent : nextTheme.evidence, nextTheme);
-
-  chart.setOption(getOption(theme));
-  return { chart, getOption };
-}
-
-function mountPieChart(id: string, data: SurveyMetric[], theme: ChartTheme): ChartBinding | null {
-  const element = document.getElementById(id);
-  if (!element) return null;
-
-  const chart = echarts.init(element);
-  const getOption = (nextTheme: ChartTheme) => createPieChartOption(data, nextTheme);
+    createBarChartOption(data, tone === "accent" ? nextTheme.accent : nextTheme.evidence, nextTheme, config);
 
   chart.setOption(getOption(theme));
   return { chart, getOption };
@@ -85,17 +99,11 @@ function readTheme(): ChartTheme {
 
   return {
     accent: readCssVar(styles, "--accent"),
-    chartTones: [
-      readCssVar(styles, "--chart-tone-1"),
-      readCssVar(styles, "--chart-tone-2"),
-      readCssVar(styles, "--chart-tone-3"),
-      readCssVar(styles, "--chart-tone-4"),
-      readCssVar(styles, "--evidence"),
-    ],
     evidence: readCssVar(styles, "--evidence"),
     ink: readCssVar(styles, "--text"),
     line: readCssVar(styles, "--border"),
     muted: readCssVar(styles, "--text-secondary"),
+    surface: readCssVar(styles, "--surface"),
   };
 }
 
