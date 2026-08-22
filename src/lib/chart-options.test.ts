@@ -79,4 +79,37 @@ describe("createBarChartOption", () => {
     expect(html).toContain("占比：60%");
     expect(html).toContain("均值：4.24");
   });
+
+  it("plots percent on a pinned 0–100 axis when percentScale is on", () => {
+    const option = createBarChartOption(metrics, theme.accent, theme, {
+      percentScale: true,
+      showValueLabels: true,
+    });
+    const series = (option.series as { data: { value: number; count: number }[] }[])[0];
+    const yAxis = option.yAxis as { max: number; axisLabel: { formatter: (value: number) => string } };
+
+    expect(series.data.map((item) => item.value)).toEqual([60, 40]);
+    expect(series.data.map((item) => item.count)).toEqual([6, 4]);
+    expect(yAxis.max).toBe(100);
+    expect(yAxis.axisLabel.formatter(50)).toBe("50%");
+  });
+
+  it("keeps the headcount (not the percent) in the tooltip under percentScale", () => {
+    const option = createBarChartOption(
+      [{ label: "城市形象与记忆", value: 207, percent: 84.06, mean: 4.237, detail: "完整题项" }],
+      theme.accent,
+      theme,
+      { percentScale: true },
+    );
+    const formatter = (
+      option.tooltip as unknown as {
+        formatter: (params: { name: string; data?: object }) => string;
+      }
+    ).formatter;
+
+    const html = formatter({ name: "城市形象与记忆", data: { count: 207 } });
+
+    expect(html).toContain("人数：207");
+    expect(html).not.toContain("人数：84.06");
+  });
 });

@@ -25,6 +25,7 @@ async function initCharts() {
     }),
     mountBarChart("chart-value", survey.valueRecognition, "evidence", theme, {
       showValueLabels: true,
+      percentScale: true,
     }),
     mountBarChart("chart-tech", survey.techPriorities, "accent", theme, {
       horizontal: true,

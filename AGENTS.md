@@ -7,7 +7,7 @@
 ## 怎么跑起来
 
 ```bash
-npm run dev          # astro dev --host 127.0.0.1（默认 4323 端口）
+npm run dev          # astro dev --host 127.0.0.1（默认 4321 端口，被占用时自动顺延）
 npm test             # vitest run
 npm run validate:data  # tsx 校验 public/data 全部数据文件
 npm run build        # validate:data && astro check && astro build（产出 dist/）
@@ -35,6 +35,6 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 
 ## 当前状态与下一步
 
-- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；测试 49 项全过
+- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；测试 51 项全过
 - `dist/` 为旧构建，发布前需本地执行 `npm run build`
 - 待定项：图层开关（曾评估暂缓）、真实步行轨迹（P2 未做）

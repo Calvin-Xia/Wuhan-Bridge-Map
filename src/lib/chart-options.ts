@@ -27,6 +27,22 @@ export interface BarChartConfig {
   highlightTop?: boolean;
   /** Render the percent (or value) next to each bar. */
   showValueLabels?: boolean;
+  /**
+   * Plot `percent` as the bar value on a pinned 0–100 axis.
+   * Use when `value` is a count whose base (valid n) differs per item,
+   * e.g. effective positive rates: the bar must follow the labeled percent.
+   */
+  percentScale?: boolean;
+}
+
+interface BarDatum {
+  value: number;
+  /** Original headcount, kept for the tooltip when `percentScale` is on. */
+  count: number;
+  name: string;
+  percent?: number;
+  mean?: number;
+  detail?: string;
 }
 
 const VERTICAL_LABEL_ROTATE = 30;
@@ -40,8 +56,9 @@ export function createBarChartOption(
   config: BarChartConfig = {},
 ): ChartOption {
   const topValue = Math.max(...data.map((item) => item.value));
-  const barItems = data.map((item) => ({
-    value: item.value,
+  const barItems: BarDatum[] = data.map((item) => ({
+    value: config.percentScale ? item.percent : item.value,
+    count: item.value,
     name: item.label,
     percent: item.percent,
     mean: item.mean,
@@ -86,8 +103,10 @@ export function createBarChartOption(
     xAxis: config.horizontal
       ? {
           type: "value",
+          max: config.percentScale ? 100 : undefined,
           axisLabel: {
             color: theme.muted,
+            formatter: config.percentScale ? formatAxisPercent : undefined,
           },
           splitLine: {
             lineStyle: {
@@ -124,8 +143,10 @@ export function createBarChartOption(
         }
       : {
           type: "value",
+          max: config.percentScale ? 100 : undefined,
           axisLabel: {
             color: theme.muted,
+            formatter: config.percentScale ? formatAxisPercent : undefined,
           },
           splitLine: {
             lineStyle: {
@@ -146,7 +167,7 @@ export function createBarChartOption(
           fontSize: 11,
           fontWeight: 600,
           formatter: (params) => {
-            const item = params.data as SurveyMetric | undefined;
+            const item = params.data as BarDatum | undefined;
             return item?.percent !== undefined ? formatPercent(item.percent) : String(params.value);
           },
         },
@@ -164,12 +185,13 @@ function createMetricTooltip(): NonNullable<TooltipComponentOption["formatter"]>
 
     return list
       .map((entry) => {
-        const item = entry.data as SurveyMetric | undefined;
+        const item = entry.data as BarDatum | undefined;
         const name = item?.detail ?? String(entry.name);
         const lines = [`<strong>${escapeHtml(name)}</strong>`];
 
         if (item) {
-          lines.push(`人数：${item.value}`);
+          const count = item.count ?? item.value;
+          lines.push(`人数：${count}`);
           if (item.percent !== undefined) {
             lines.push(`占比：${formatPercent(item.percent)}`);
           }
@@ -187,6 +209,10 @@ function createMetricTooltip(): NonNullable<TooltipComponentOption["formatter"]>
 function formatPercent(percent: number): string {
   const text = String(percent);
   return text.includes(".") ? `${text.replace(/\.?0+$/, "")}%` : `${text}%`;
+}
+
+function formatAxisPercent(value: number): string {
+  return `${value}%`;
 }
 
 function escapeHtml(value: string): string {
