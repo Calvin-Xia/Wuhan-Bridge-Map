@@ -57,7 +57,9 @@ export function createBarChartOption(
 ): ChartOption {
   const topValue = Math.max(...data.map((item) => item.value));
   const barItems: BarDatum[] = data.map((item) => ({
-    value: config.percentScale ? item.percent : item.value,
+    // percentScale plots rates; fall back to 0 only if a metric lacks percent
+    // (data validation allows it — the top labels would show the raw value).
+    value: config.percentScale ? item.percent ?? 0 : item.value,
     count: item.value,
     name: item.label,
     percent: item.percent,

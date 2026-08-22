@@ -33,6 +33,14 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 - 问卷口径：网络版 228 份、现场版 57 份、开放题网络 72 条/现场 22 条；图表多选数据用横向条形，不写"公众普遍"类推断
 - 地图 hover 用 `setPaintProperty` 整层强调；**不使用 feature-state/promoteId**（曾导致线条渲染异常）
 
+## CI/CD（GitHub Actions → Cloudflare Workers Assets）
+
+- `.github/workflows/ci.yml`：PR 与 main 推送触发 CI（`npm ci` → `validate:data` → `npm test` → `npm run build`）；仅 main 推送由 `cloudflare/wrangler-action` 部署 `dist/` 到 Workers Assets（产物经 artifact 传递，只构建一次）
+- `wrangler.jsonc`：assets 指向 `./dist`（纯静态托管、无 Worker 脚本），部署后地址为 `https://wuhan-bridge-map.<account>.workers.dev`
+- 仓库必需的 Secrets：`CLOUDFLARE_API_TOKEN`（"Edit Cloudflare Workers" 模板）、`CLOUDFLARE_ACCOUNT_ID`
+- 本地手动发布：`npx wrangler login` 一次后 `npm run deploy`
+- 注意：wrangler 的 postinstall（workerd）在本机沙箱环境可能被拦截；GitHub Actions（Linux）不受影响
+
 ## 当前状态与下一步
 
 - 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；测试 51 项全过

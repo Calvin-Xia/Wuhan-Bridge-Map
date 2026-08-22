@@ -8,7 +8,8 @@
     "build": "npm run validate:data && astro check && astro build",
     "preview": "astro preview --host 127.0.0.1",
     "test": "vitest run",
-    "validate:data": "tsx scripts/validate-data.ts"
+    "validate:data": "tsx scripts/validate-data.ts",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
@@ -21,6 +22,7 @@
     "@astrojs/check": "^0.9.9",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "wrangler": "^4.125.0"
   }
 }
