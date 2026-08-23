@@ -3,7 +3,9 @@ import {
   DARK_MAP_THEME,
   LIGHT_MAP_THEME,
   RESEARCH_STATUS_FILLS,
+  RESEARCH_STATUS_FILLS_DARK,
   researchStatusFill,
+  researchStatusFillDark,
 } from "./map-layer-spec";
 
 describe("覆盖层明暗调色板", () => {
@@ -17,5 +19,14 @@ describe("覆盖层明暗调色板", () => {
     expect(researchStatusFill("已实地调研")).toBe(RESEARCH_STATUS_FILLS["已实地调研"]);
     expect(researchStatusFill("待实地核验")).toBe(RESEARCH_STATUS_FILLS["待实地核验"]);
     expect(researchStatusFill("未知状态")).toBe(RESEARCH_STATUS_FILLS.fallback);
+  });
+
+  it("暗色状态色提亮一档且与亮色不同", () => {
+    expect(researchStatusFillDark("已实地调研")).toBe(RESEARCH_STATUS_FILLS_DARK["已实地调研"]);
+    expect(researchStatusFillDark("待实地核验")).toBe(RESEARCH_STATUS_FILLS_DARK["待实地核验"]);
+    expect(researchStatusFillDark("未知状态")).toBe(RESEARCH_STATUS_FILLS_DARK.fallback);
+    for (const key of ["已实地调研", "待实地核验"]) {
+      expect(researchStatusFillDark(key)).not.toBe(researchStatusFill(key));
+    }
   });
 });

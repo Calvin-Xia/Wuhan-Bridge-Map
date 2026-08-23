@@ -27,6 +27,15 @@ describe("overlay appearance contract", () => {
     expect(page).not.toContain("02795a");
     expect(styles).not.toContain("02795a");
   });
+
+  it("defines the dark-mode glow dot and brightened label contract", () => {
+    expect(styles).toMatch(
+      /:root\[data-theme="dark"\] \.bridge-map-dot\s*\{[^}]*--point-fill-dark[^}]*color-mix/,
+    );
+    expect(styles).toMatch(
+      /:root\[data-theme="dark"\] \.bridge-map-label\s*\{[^}]*color: #fff/,
+    );
+  });
 });
 
 describe("dashboard interface contract", () => {

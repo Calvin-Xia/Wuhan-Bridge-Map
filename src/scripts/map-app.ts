@@ -10,6 +10,7 @@ import {
   DARK_MAP_THEME,
   LIGHT_MAP_THEME,
   researchStatusFill,
+  researchStatusFillDark,
   type MapLayerTheme,
 } from "../lib/map-layer-spec";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
@@ -219,12 +220,13 @@ function renderBridgeOverlays() {
   for (const bridge of state.bridges) {
     const position = bridge.geometry.coordinates as [number, number];
     const fill = researchStatusFill(bridge.properties.researchStatus);
+    const fillDark = researchStatusFillDark(bridge.properties.researchStatus);
 
     const element = document.createElement("div");
     element.className = "bridge-map-point";
     // 锚点=圆点中心：content 只含 dot，label 绝对定位溢出在下方（不影响锚点计算）。
     element.innerHTML = `
-      <span class="bridge-map-dot" style="--point-fill: ${fill}"></span>
+      <span class="bridge-map-dot" style="--point-fill: ${fill}; --point-fill-dark: ${fillDark}"></span>
       <span class="bridge-map-label">${escapeHtml(bridge.properties.name)}</span>
     `;
 

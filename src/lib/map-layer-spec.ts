@@ -34,6 +34,20 @@ export const RESEARCH_STATUS_FILLS = {
   fallback: "#08768d",
 } as const;
 
+/** 暗色模式（amap darkblue 底图）下提亮一档的状态色：柔光环方案。 */
+export const RESEARCH_STATUS_FILLS_DARK = {
+  "已实地调研": "#e07b5f",
+  "待实地核验": "#c9974f",
+  fallback: "#2fa6bd",
+} as const;
+
 export function researchStatusFill(status: string): string {
   return (RESEARCH_STATUS_FILLS as Record<string, string>)[status] ?? RESEARCH_STATUS_FILLS.fallback;
+}
+
+export function researchStatusFillDark(status: string): string {
+  return (
+    (RESEARCH_STATUS_FILLS_DARK as Record<string, string>)[status] ??
+    RESEARCH_STATUS_FILLS_DARK.fallback
+  );
 }
