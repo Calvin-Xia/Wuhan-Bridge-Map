@@ -2,47 +2,42 @@ import type { StyleSpecification } from "maplibre-gl";
 import type { MapLayerTheme } from "./map-layer-spec";
 
 /**
- * 底图瓦片工厂：天地图（WMTS 球面墨卡托 w 集）为主源，OSM 栅格为运行时兜底源。
+ * 底图瓦片工厂：高德在线底图瓦片为唯一主源（官方文档"官方底图瓦片"一节提供的
+ * URL，无需 key），OSM 栅格为运行时兜底源。
  *
- * 图层组合（实测结论，2026-08）：
- * - 底图用 `img_w`（卫星影像）+ `cva_w`（注记）：两级在 z10-z14 均返回真内容。
- * - `vec_w`（矢量）仅低级别（z10）返回真内容，z12 及以上为 242 灰占位图
- *   （HTTP 200 + 103 字节纯色 PNG，非错误响应），故弃用矢量层。
- *
- * 注意：天地图 WMTS 是 TMS 行序（TILEROW 自下而上），必须在 raster 源上声明
- * `scheme: "tms"`，让 MapLibre 引擎自动翻转 {y}——实测 maplibre-gl 5.24 不替换
- * `{-y}` 占位符（会以字面量发送导致 400），且不能再叠加 `{-y}` 造成双重翻转。
- * （`map-basemap.test.ts` 对这个契约有测试。）
- *
- * 注意：天地图错误有两种形态——白名单不匹配为 403（code 301007，可被兜底捕获）；
- * 图层未授权/占位为「200 + 纯色占位图」（无错误事件，兜底无法感知，只能靠配置正确）。
+ * - 矢量地图 URL（style=8，矢量路网+注记，数据较新）：
+ *   `https://webrd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}`
+ *   （{1-4} 为负载均衡服务器编号；标准 XYZ 网格，无需 TMS 翻转、无需 {-y}）。
+ * - 为何不用 style=7（wprd 官方示例）：实测同一瓦片位置 style=7 的矢量快照
+ *   缺 2019 年通车的杨泗港长江大桥（124B 纯水），style=8 有完整桥梁且带注记
+ *   （5066B，"杨泗港大桥"字样可见）。
+ * - 坐标系：高德瓦片为 **GCJ-02（火星坐标系）**，与项目数据（WGS-84，OSM 口径）
+ *   存在约 300-500 m 的系统性偏移（武汉）；数据坐标转换暂未实施（已知并接受）。
+ * - 高德 key + 安全密钥仅用于官方 JS API / Web 服务 API，第三方引擎取瓦片用不到。
+ * - 错误形态：限流/非授权端点可能返回 403（可被兜底捕获）；个别返回 200 + 占位图
+ *   （无错误事件，兜底无法感知），配置与网络层面的可用性仍需实测确认。
  */
 
-/** 天地图应用密钥（前端公开常量；天地图按配额 + 域名白名单控制，需在控制台配置）。 */
-export const TIANDITU_TK = "7b42444517d4ce3a5f34f7219ec013a5";
-
 export const BASEMAP_SOURCES = {
-  tiandituBase: "tdt-base",
-  tiandituAnnotation: "tdt-cva",
+  amapVector: "amap-vector",
   osmFallback: "osm-raster",
 } as const;
 
 export const BASEMAP_LAYERS = {
   background: "map-background",
-  tiandituBase: "tdt-base",
-  tiandituAnnotation: "tdt-cva",
+  amapVector: "amap-vector",
   osmFallback: "osm-raster",
 } as const;
 
-export const TDT_ATTRIBUTION =
-  '<a href="https://www.tianditu.gov.cn" target="_blank" rel="noopener noreferrer">© 天地图</a>';
+export const AMAP_ATTRIBUTION =
+  '<a href="https://www.amap.com" target="_blank" rel="noopener noreferrer">© 高德地图</a>';
 export const OSM_ATTRIBUTION =
   '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">&copy; OpenStreetMap contributors</a>';
 
-/** 天地图多主机轮询（MapLibre 会在 tiles 数组之间分发请求）。 */
-const TDT_HOSTS = ["t0", "t1", "t2", "t3", "t4"];
-/** 天地图球面墨卡托影像/注记最大级别 18。 */
-const TDT_MAXZOOM = 18;
+/** 高德矢量瓦片负载均衡主机（官方示例 {1-4}）。 */
+const AMAP_HOSTS = ["01", "02", "03", "04"];
+/** 高德矢量瓦片最大级别 18（地图侧 maxZoom 17 不受影响）。 */
+const AMAP_MAXZOOM = 18;
 
 /** Raster 图层的精确 paint 类型（避免 Record 索引签名与规范类型不兼容）。 */
 type RasterPaintParams = {
@@ -53,86 +48,27 @@ type RasterPaintParams = {
   "raster-brightness-max"?: number;
 };
 
-/** 注记层主题参数：只做轻微降饱和，不做亮度压暗（暗色下保持白描边/黑字可读）。 */
-export interface AnnotationTheme {
-  saturation: number;
+/** 生成高德矢量瓦片 URL 数组（webrd01-04 主机，style=8 矢量+注记）。 */
+export function createAmapTileUrls(): string[] {
+  const query = `lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}`;
+  return AMAP_HOSTS.map((host) => `https://webrd${host}.is.autonavi.com/appmaptile?${query}`);
 }
 
-export const LIGHT_ANNOTATION_THEME: AnnotationTheme = { saturation: -0.12 };
-export const DARK_ANNOTATION_THEME: AnnotationTheme = { saturation: -0.32 };
-
-/** 天地图影像底图主题：更强的降饱和/压暗，突出覆盖层（路线、桥点、文字标签）。 */
-export interface TiandituBasemapTheme {
-  base: RasterPaintParams;
-  annotation: AnnotationTheme;
-}
-
-export const LIGHT_TIANDITU_THEME: TiandituBasemapTheme = {
-  base: {
-    "raster-opacity": 0.92,
-    "raster-saturation": -0.45,
-    "raster-contrast": 0.05,
-    "raster-brightness-min": 0.05,
-    "raster-brightness-max": 0.98,
-  },
-  annotation: LIGHT_ANNOTATION_THEME,
-};
-
-export const DARK_TIANDITU_THEME: TiandituBasemapTheme = {
-  base: {
-    "raster-opacity": 0.88,
-    "raster-saturation": -0.5,
-    "raster-contrast": 0.08,
-    "raster-brightness-min": 0.08,
-    "raster-brightness-max": 0.62,
-  },
-  annotation: DARK_ANNOTATION_THEME,
-};
-
-/** 生成天地图某 WMTS 图层（img/cva）的瓦片 URL 数组（t0-t4 主机）。 */
-export function createTiandituTileUrls(
-  wmtsLayer: "img" | "cva",
-  tk: string = TIANDITU_TK,
-): string[] {
-  const query = [
-    "SERVICE=WMTS",
-    "REQUEST=GetTile",
-    "VERSION=1.0.0",
-    `LAYER=${wmtsLayer}`,
-    "STYLE=default",
-    "TILEMATRIXSET=w",
-    "FORMAT=tiles",
-    "TILEMATRIX={z}",
-    "TILEROW={y}",
-    "TILECOL={x}",
-    `tk=${encodeURIComponent(tk)}`,
-  ].join("&");
-  return TDT_HOSTS.map((host) => `https://${host}.tianditu.gov.cn/${wmtsLayer}_w/wmts?${query}`);
-}
-
-export function createTiandituSources(
-  tk: string = TIANDITU_TK,
-): Record<string, { type: "raster"; tiles: string[]; tileSize: number; minzoom: number; maxzoom: number; attribution: string; scheme: "tms" }> {
-  const attribution = TDT_ATTRIBUTION;
+export function createAmapSource(): {
+  type: "raster";
+  tiles: string[];
+  tileSize: number;
+  minzoom: number;
+  maxzoom: number;
+  attribution: string;
+} {
   return {
-    [BASEMAP_SOURCES.tiandituBase]: {
-      type: "raster",
-      tiles: createTiandituTileUrls("img", tk),
-      tileSize: 256,
-      minzoom: 0,
-      maxzoom: TDT_MAXZOOM,
-      attribution,
-      scheme: "tms",
-    },
-    [BASEMAP_SOURCES.tiandituAnnotation]: {
-      type: "raster",
-      tiles: createTiandituTileUrls("cva", tk),
-      tileSize: 256,
-      minzoom: 0,
-      maxzoom: TDT_MAXZOOM,
-      attribution,
-      scheme: "tms",
-    },
+    type: "raster",
+    tiles: createAmapTileUrls(),
+    tileSize: 256,
+    minzoom: 0,
+    maxzoom: AMAP_MAXZOOM,
+    attribution: AMAP_ATTRIBUTION,
   };
 }
 
@@ -154,8 +90,8 @@ export function createOsmFallbackSource(): {
   };
 }
 
-/** OSM 兜底层的主题参数（MapLayerTheme 的栅格参数本就是为 OSM 类底图设计）。 */
-function osmRasterPaint(theme: MapLayerTheme): RasterPaintParams {
+/** 主源与 OSM 兜底共用同一套主题栅格参数（MapLayerTheme 为浅色系底图设计）。 */
+function baseRasterPaint(theme: MapLayerTheme): RasterPaintParams {
   return {
     "raster-opacity": theme.rasterOpacity,
     "raster-saturation": theme.rasterSaturation,
@@ -168,10 +104,7 @@ function osmRasterPaint(theme: MapLayerTheme): RasterPaintParams {
 /** StyleSpecification.layers 的元素类型（= LayerSpecification，含新版 color-relief 变体）。 */
 type LayerSpecification = StyleSpecification["layers"][number];
 
-export function createBasemapLayers(
-  theme: MapLayerTheme,
-  tianditu: TiandituBasemapTheme,
-): LayerSpecification[] {
+export function createBasemapLayers(theme: MapLayerTheme): LayerSpecification[] {
   return [
     {
       id: BASEMAP_LAYERS.background,
@@ -179,16 +112,10 @@ export function createBasemapLayers(
       paint: { "background-color": theme.background },
     },
     {
-      id: BASEMAP_LAYERS.tiandituBase,
+      id: BASEMAP_LAYERS.amapVector,
       type: "raster",
-      source: BASEMAP_SOURCES.tiandituBase,
-      paint: tianditu.base,
-    },
-    {
-      id: BASEMAP_LAYERS.tiandituAnnotation,
-      type: "raster",
-      source: BASEMAP_SOURCES.tiandituAnnotation,
-      paint: { "raster-saturation": tianditu.annotation.saturation },
+      source: BASEMAP_SOURCES.amapVector,
+      paint: baseRasterPaint(theme),
     },
   ];
 }
@@ -198,20 +125,16 @@ export function createOsmFallbackLayer(theme: MapLayerTheme): LayerSpecification
     id: BASEMAP_LAYERS.osmFallback,
     type: "raster",
     source: BASEMAP_SOURCES.osmFallback,
-    paint: osmRasterPaint(theme),
+    paint: baseRasterPaint(theme),
   };
 }
 
-export function createTiandituStyle(
-  theme: MapLayerTheme,
-  tianditu: TiandituBasemapTheme,
-  tk: string = TIANDITU_TK,
-): StyleSpecification {
+export function createAmapStyle(theme: MapLayerTheme): StyleSpecification {
   return {
     version: 8,
-    name: "Wuhan bridge study area · Tianditu WMTS raster",
-    sources: createTiandituSources(tk),
-    layers: createBasemapLayers(theme, tianditu),
+    name: "Wuhan bridge study area · AMap vector raster",
+    sources: { [BASEMAP_SOURCES.amapVector]: createAmapSource() },
+    layers: createBasemapLayers(theme),
   };
 }
 
@@ -221,15 +144,11 @@ export interface BasemapPaintUpdate {
   paint: Record<string, string | number>;
 }
 
-export function createBasemapThemeUpdates(
-  theme: MapLayerTheme,
-  tianditu: TiandituBasemapTheme,
-): BasemapPaintUpdate[] {
+export function createBasemapThemeUpdates(theme: MapLayerTheme): BasemapPaintUpdate[] {
   return [
     { layerId: BASEMAP_LAYERS.background, paint: { "background-color": theme.background } },
-    { layerId: BASEMAP_LAYERS.tiandituBase, paint: tianditu.base },
-    { layerId: BASEMAP_LAYERS.tiandituAnnotation, paint: { "raster-saturation": tianditu.annotation.saturation } },
-    { layerId: BASEMAP_LAYERS.osmFallback, paint: osmRasterPaint(theme) },
+    { layerId: BASEMAP_LAYERS.amapVector, paint: baseRasterPaint(theme) },
+    { layerId: BASEMAP_LAYERS.osmFallback, paint: baseRasterPaint(theme) },
   ];
 }
 

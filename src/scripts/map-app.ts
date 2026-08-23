@@ -12,16 +12,13 @@ import type {
 import {
   BASEMAP_LAYERS,
   BASEMAP_SOURCES,
-  DARK_TIANDITU_THEME,
-  LIGHT_TIANDITU_THEME,
   TileErrorTracker,
+  createAmapStyle,
   createBasemapThemeUpdates,
   createOsmFallbackLayer,
   createOsmFallbackSource,
-  createTiandituStyle,
   isTileError,
   type MapTileErrorShape,
-  type TiandituBasemapTheme,
 } from "../lib/map-basemap";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
@@ -47,7 +44,7 @@ const STUDY_AREA_BOUNDS: LngLatBoundsLike = [
   [114.15, 30.4],
   [114.525, 30.725],
 ];
-type BasemapProvider = "tianditu" | "osm";
+type BasemapProvider = "amap" | "osm";
 const state = {
   activeBridgeId: "",
   bridges: [] as BridgeFeature[],
@@ -57,7 +54,7 @@ const state = {
   labelMarkers: [] as maplibregl.Marker[],
   map: null as maplibregl.Map | null,
   popup: null as maplibregl.Popup | null,
-  basemapProvider: "tianditu" as BasemapProvider,
+  basemapProvider: "amap" as BasemapProvider,
   tileErrorTracker: null as TileErrorTracker | null,
 };
 
@@ -113,7 +110,7 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
   const theme = getMapTheme(themeMode);
   const map = new maplibregl.Map({
     container: "bridge-map",
-    style: createTiandituStyle(theme, getTiandituTheme(themeMode)),
+    style: createAmapStyle(theme),
     center: INITIAL_MAP_VIEW.center,
     zoom: INITIAL_MAP_VIEW.zoom,
     minZoom: 9.1,
@@ -182,10 +179,10 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
 
   map.on("error", (event) => {
     const error = event.error as MapTileErrorShape | undefined;
-    // 瓦片级错误（限流/403/网络失败）：静默重试；天地图连续达到阈值时自动切 OSM 备用源。
+    // 瓦片级错误（限流/403/网络失败）：静默重试；主源连续达到阈值时自动切 OSM 备用源。
     if (isTileError(error)) {
       if (
-        state.basemapProvider === "tianditu" &&
+        state.basemapProvider === "amap" &&
         state.tileErrorTracker?.record(performance.now(), error)
       ) {
         switchToOsmFallback();
@@ -202,12 +199,8 @@ function switchToOsmFallback() {
   const map = state.map;
   if (!map || !map.isStyleLoaded() || state.basemapProvider === "osm") return;
 
-  for (const layerId of [BASEMAP_LAYERS.tiandituBase, BASEMAP_LAYERS.tiandituAnnotation]) {
-    if (map.getLayer(layerId)) map.removeLayer(layerId);
-  }
-  for (const sourceId of [BASEMAP_SOURCES.tiandituBase, BASEMAP_SOURCES.tiandituAnnotation]) {
-    if (map.getSource(sourceId)) map.removeSource(sourceId);
-  }
+  if (map.getLayer(BASEMAP_LAYERS.amapVector)) map.removeLayer(BASEMAP_LAYERS.amapVector);
+  if (map.getSource(BASEMAP_SOURCES.amapVector)) map.removeSource(BASEMAP_SOURCES.amapVector);
 
   map.addSource(BASEMAP_SOURCES.osmFallback, createOsmFallbackSource());
   const theme = getMapTheme(getDocumentTheme());
@@ -241,9 +234,8 @@ function applyMapTheme(mode: ThemeMode) {
   if (!map || !map.isStyleLoaded()) return;
 
   const theme = getMapTheme(mode);
-  const tianditu = getTiandituTheme(mode);
 
-  for (const update of createBasemapThemeUpdates(theme, tianditu)) {
+  for (const update of createBasemapThemeUpdates(theme)) {
     for (const [property, value] of Object.entries(update.paint)) {
       setPaintPropertyIfPresent(map, update.layerId, property, value);
     }
@@ -272,10 +264,6 @@ function getDocumentTheme(): ThemeMode {
 
 function getMapTheme(mode: ThemeMode): MapLayerTheme {
   return mode === "dark" ? DARK_MAP_THEME : LIGHT_MAP_THEME;
-}
-
-function getTiandituTheme(mode: ThemeMode): TiandituBasemapTheme {
-  return mode === "dark" ? DARK_TIANDITU_THEME : LIGHT_TIANDITU_THEME;
 }
 
 function renderBridgeList() {
