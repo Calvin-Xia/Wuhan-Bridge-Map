@@ -86,7 +86,13 @@ describe("bridge chain", () => {
       openedYear: 2011,
       bridgeType: "公路桥",
       researchStatus: "已实地调研",
-      sourceIds: ["source-bridge-catalog", "source-survey-field", "source-team-summary"],
+      sourceIds: [
+        "source-bridge-catalog",
+        "source-survey-field",
+        "source-team-summary",
+        "source-luqiao-interview",
+        "source-luqiao-summary-2025",
+      ],
     });
     expect(erqi.properties.mediaIds).toEqual([]);
     expect(erqi.properties.shortStory).toContain("5 份问卷");

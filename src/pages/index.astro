@@ -182,23 +182,36 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
             <div id="chart-open-field" class="chart-canvas" role="img" aria-label="现场版开放题主题横向条形图"></div>
           </figure>
         </section>
-        <section class="voice-band" aria-label="市民之声">
-          <header class="evidence-heading reveal">
-            <p class="section-label">市民之声</p>
-            <h2>无法归位到单一桥梁的开放回答</h2>
-            <p class="evidence-lead">
-              现场版第 18 题原始记录未附点位，网络版第 20 题多数回答未点名具体桥梁，因此这些声音以整体方式呈现：主题频次与个人叙事同等重要，引用均经匿名处理。
-            </p>
-          </header>
-          <div class="voice-group">
-            <h3>网络版问卷 · 第 20 题（72 条实质回答）</h3>
-            <ul id="voice-list-online" class="voice-list" aria-busy="true"></ul>
-          </div>
-          <div class="voice-group">
-            <h3>现场版问卷 · 第 18 题（22 条实质回答）</h3>
-            <ul id="voice-list-field" class="voice-list" aria-busy="true"></ul>
-          </div>
-        </section>
+        <div class="tail-grid">
+          <section class="voice-band" aria-label="市民之声">
+            <header class="evidence-heading reveal">
+              <p class="section-label">市民之声</p>
+              <h2>问卷里的市民之声</h2>
+              <p class="evidence-lead">
+                现场版第 18 题原始记录未附点位，网络版第 20 题多数回答未点名具体桥梁，因此这些声音以整体方式呈现：主题频次与个人叙事同等重要，引用均经匿名处理。
+              </p>
+            </header>
+            <div class="voice-group">
+              <h3>网络版问卷 · 第 20 题（72 条实质回答）</h3>
+              <ul id="voice-list-online" class="voice-list" aria-busy="true"></ul>
+            </div>
+            <div class="voice-group">
+              <h3>现场版问卷 · 第 18 题（22 条实质回答）</h3>
+              <ul id="voice-list-field" class="voice-list" aria-busy="true"></ul>
+            </div>
+          </section>
+          <section class="governance-band" id="governance-band" aria-label="治理侧记" aria-busy="true">
+            <header class="governance-heading reveal">
+              <p class="section-label">治理侧记</p>
+              <h2>从日常巡护到智慧治理</h2>
+              <p class="evidence-lead" id="governance-intro">正在读取治理数据……</p>
+            </header>
+            <ul id="governance-stat-groups" class="governance-stat-groups" aria-busy="true"></ul>
+            <ul id="governance-quotes" class="governance-quotes" aria-busy="true"></ul>
+            <h3 class="governance-subheading">数据口径与来源</h3>
+            <ul id="governance-disclaimers" class="governance-disclaimers"></ul>
+          </section>
+        </div>
       </section>
     </main>
 
@@ -209,6 +222,7 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
           import("../scripts/map-app"),
           import("../scripts/charts"),
           import("../scripts/voices"),
+          import("../scripts/governance"),
           import("../scripts/reveal"),
         ]);
       })().catch((error) => {

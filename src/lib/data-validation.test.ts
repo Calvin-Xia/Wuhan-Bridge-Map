@@ -2,11 +2,13 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   validateBridgeCollection,
+  validateGovernance,
   validateResearchDataset,
   validateRouteCollection,
   validateSurveySummary,
   validateVoices,
   type BridgeFeatureCollection,
+  type GovernanceRecord,
   type ResearchDataset,
   type RouteFeatureCollection,
   type SourceRecord,
@@ -89,6 +91,10 @@ const productionSurvey = JSON.parse(
 const productionVoices = JSON.parse(
   readFileSync(new URL("../../public/data/voices.json", import.meta.url), "utf8"),
 ) as VoiceRecord[];
+
+const productionGovernance = JSON.parse(
+  readFileSync(new URL("../../public/data/governance.json", import.meta.url), "utf8"),
+) as GovernanceRecord;
 
 describe("validateBridgeCollection", () => {
   it("accepts bridge point features with required research fields", () => {
@@ -213,11 +219,128 @@ describe("validateResearchDataset", () => {
   });
 
   it("accepts the full production dataset including the bridge chain", () => {
-    expect(validateResearchDataset({ ...productionDataset, voices: productionVoices })).toEqual([]);
+    expect(
+      validateResearchDataset({ ...productionDataset, voices: productionVoices, governance: productionGovernance }),
+    ).toEqual([]);
   });
 
   it("accepts the full production survey summary", () => {
     expect(validateSurveySummary(productionSurvey)).toEqual([]);
+  });
+
+  it("accepts story institution notes with quotes and paragraphs", () => {
+    const dataset: ResearchDataset = {
+      ...validDataset,
+      stories: [
+        {
+          ...validDataset.stories[0],
+          quoteLabel: "网络版问卷开放回答",
+          institutionNote: {
+            quote: "养护工作会把细小病害处理在早期。",
+            quoteLabel: "根据访谈纸质记录整理，相关负责人介绍",
+            paragraphs: ["预防性养护强调在病害尚未扩大时及时处置。"],
+          },
+        },
+      ],
+    };
+
+    expect(validateResearchDataset(dataset)).toEqual([]);
+  });
+
+  it("requires a quote label whenever an institution note carries a quote", () => {
+    const dataset: ResearchDataset = {
+      ...validDataset,
+      stories: [
+        {
+          ...validDataset.stories[0],
+          institutionNote: {
+            quote: "没有标注的引语。",
+            paragraphs: ["段落。"],
+          },
+        },
+      ],
+    };
+
+    expect(validateResearchDataset(dataset)).toContain(
+      'stories[0].institutionNote.quoteLabel is required when institutionNote.quote is present',
+    );
+  });
+
+  it("rejects empty institution note paragraphs", () => {
+    const dataset: ResearchDataset = {
+      ...validDataset,
+      stories: [
+        {
+          ...validDataset.stories[0],
+          institutionNote: {
+            paragraphs: ["有效段落", ""],
+          },
+        },
+      ],
+    };
+
+    expect(validateResearchDataset(dataset)).toContain(
+      "stories[0].institutionNote.paragraphs[1] must be a non-empty paragraph",
+    );
+  });
+});
+
+describe("validateGovernance", () => {
+  const validGovernance: GovernanceRecord = {
+    intro: "治理侧记引言。",
+    statGroups: [
+      {
+        title: "巡检养护",
+        items: [
+          { value: "826 座", label: "检测全覆盖", source: "据 2025 年工作总结" },
+        ],
+      },
+    ],
+    quotes: [{ text: "引语。", cite: "根据访谈纸质记录整理 · 相关负责人介绍" }],
+    disclaimers: ["口径说明。"],
+  };
+
+  it("accepts complete governance records", () => {
+    expect(validateGovernance(validGovernance)).toEqual([]);
+  });
+
+  it("rejects empty intro, groups, quotes and disclaimers", () => {
+    expect(
+      validateGovernance({
+        ...validGovernance,
+        intro: " ",
+        statGroups: [],
+        quotes: [],
+        disclaimers: [],
+      }),
+    ).toEqual([
+      "governance.intro is required",
+      "governance.statGroups must include at least one group",
+      "governance.quotes must include at least one quote",
+      "governance.disclaimers must include at least one disclaimer",
+    ]);
+  });
+
+  it("rejects stats with missing value, label or source", () => {
+    expect(
+      validateGovernance({
+        ...validGovernance,
+        statGroups: [
+          {
+            title: "巡检养护",
+            items: [{ value: "", label: " " , source: "" }],
+          },
+        ],
+      }),
+    ).toEqual([
+      "governance.statGroups[0].items[0].value is required",
+      "governance.statGroups[0].items[0].label is required",
+      "governance.statGroups[0].items[0].source is required",
+    ]);
+  });
+
+  it("accepts the full production governance record", () => {
+    expect(validateGovernance(productionGovernance)).toEqual([]);
   });
 });
 

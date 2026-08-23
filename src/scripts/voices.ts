@@ -1,5 +1,7 @@
 import type { VoiceRecord } from "../lib/data-validation";
 
+const COLLAPSED_COUNT = 3;
+
 void initVoices();
 
 async function initVoices() {
@@ -29,6 +31,54 @@ function renderVoiceGroup(container: HTMLElement, voices: VoiceRecord[]) {
         </li>`,
     )
     .join("");
+
+  bindCollapseToggle(container, ".voice-item", COLLAPSED_COUNT, {
+    expand: (rest) => `展开其余 ${rest} 条`,
+    collapse: (rest) => `收起其余 ${rest} 条`,
+  });
+}
+
+/**
+ * Attach a two-way collapse toggle to a list: the first `visibleCount`
+ * items stay visible, the rest are hidden until expanded.
+ */
+function bindCollapseToggle(
+  list: HTMLElement,
+  itemSelector: string,
+  visibleCount: number,
+  labels: { expand: (rest: number) => string; collapse: (rest: number) => string },
+) {
+  const items = Array.from(list.children).filter(
+    (element): element is HTMLElement => element.matches(itemSelector),
+  );
+  const rest = items.slice(visibleCount);
+  if (rest.length === 0) return;
+
+  const toggleItem = document.createElement("li");
+  toggleItem.className = "voice-expand";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "voice-expand-toggle";
+  button.setAttribute("aria-expanded", "false");
+
+  let expanded = false;
+  const update = () => {
+    rest.forEach((item) => {
+      item.hidden = !expanded;
+    });
+    button.textContent = expanded ? labels.collapse(rest.length) : labels.expand(rest.length);
+    button.setAttribute("aria-expanded", String(expanded));
+  };
+
+  button.addEventListener("click", () => {
+    expanded = !expanded;
+    update();
+  });
+
+  toggleItem.appendChild(button);
+  list.appendChild(toggleItem);
+  update();
 }
 
 async function fetchJson<T>(path: string): Promise<T> {

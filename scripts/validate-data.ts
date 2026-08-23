@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import {
   validateResearchDataset,
   type BridgeFeatureCollection,
+  type GovernanceRecord,
   type ResearchDataset,
   type RouteFeatureCollection,
   type SourceRecord,
@@ -16,13 +17,14 @@ async function readJson<T>(path: string): Promise<T> {
   return JSON.parse(file) as T;
 }
 
-const [bridges, routes, stories, survey, sources, voices] = await Promise.all([
+const [bridges, routes, stories, survey, sources, voices, governance] = await Promise.all([
   readJson<BridgeFeatureCollection>("public/data/bridges.geojson"),
   readJson<RouteFeatureCollection>("public/data/routes.geojson"),
   readJson<StoryRecord[]>("public/data/stories.json"),
   readJson<SurveySummary>("public/data/survey-summary.json"),
   readJson<SourceRecord[]>("public/data/sources.json"),
   readJson<VoiceRecord[]>("public/data/voices.json"),
+  readJson<GovernanceRecord>("public/data/governance.json"),
 ]);
 
 const dataset: ResearchDataset = {
@@ -32,6 +34,7 @@ const dataset: ResearchDataset = {
   survey,
   sources,
   voices,
+  governance,
 };
 
 const issues = validateResearchDataset(dataset);

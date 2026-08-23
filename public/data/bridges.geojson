@@ -18,7 +18,7 @@
         "shortStory": "新中国重要桥梁工程之一。问卷中 60.44% 的到访者将它选为最熟悉桥梁，也是现场样本量最大的点位（13 份）。",
         "researchStatus": "已实地调研",
         "mediaIds": [],
-        "sourceIds": ["source-yangtze-bridge", "source-survey-online", "source-survey-field", "source-open-online", "source-open-field", "source-team-summary"]
+        "sourceIds": ["source-yangtze-bridge", "source-survey-online", "source-survey-field", "source-open-online", "source-open-field", "source-team-summary", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {
@@ -38,7 +38,7 @@
         "shortStory": "见证武汉过江交通网络化。现场回收 8 份问卷，桥下空间获正面评价，江滩设施仍有改进需求。",
         "researchStatus": "已实地调研",
         "mediaIds": [],
-        "sourceIds": ["source-bridge-catalog", "source-survey-field", "source-open-field", "source-team-summary"]
+        "sourceIds": ["source-bridge-catalog", "source-survey-field", "source-open-field", "source-team-summary", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {
@@ -58,7 +58,7 @@
         "shortStory": "明志杰组在桥下回收 5 份问卷，受访者以钓鱼爱好者与本地居民为主，桥下空间以日常休闲活动为主。",
         "researchStatus": "已实地调研",
         "mediaIds": [],
-        "sourceIds": ["source-bridge-catalog", "source-survey-field", "source-team-summary"]
+        "sourceIds": ["source-bridge-catalog", "source-survey-field", "source-team-summary", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {
@@ -78,7 +78,7 @@
         "shortStory": "现场回收 6 份问卷；网络版最熟悉桥梁第三位（6.59%），通勤与观景叙事正在形成。",
         "researchStatus": "已实地调研",
         "mediaIds": [],
-        "sourceIds": ["source-bridge-catalog", "source-survey-online", "source-survey-field", "source-team-summary"]
+        "sourceIds": ["source-bridge-catalog", "source-survey-online", "source-survey-field", "source-team-summary", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {
@@ -98,7 +98,7 @@
         "shortStory": "双层通道组织过江交通；现场回收 12 份问卷，为第二大点位，桥下江滩承担散步、看江等公共生活。",
         "researchStatus": "已实地调研",
         "mediaIds": [],
-        "sourceIds": ["source-yangsigang", "source-survey-field", "source-open-online", "source-team-summary"]
+        "sourceIds": ["source-yangsigang", "source-survey-field", "source-open-online", "source-team-summary", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {
@@ -118,7 +118,7 @@
         "shortStory": "强化南部过江能力；现场点位仅回收 2 份问卷，反映南北端桥下空间人流稀少。",
         "researchStatus": "已实地调研",
         "mediaIds": [],
-        "sourceIds": ["source-bridge-catalog", "source-survey-field", "source-team-summary"]
+        "sourceIds": ["source-bridge-catalog", "source-survey-field", "source-team-summary", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {
@@ -138,7 +138,7 @@
         "shortStory": "公铁两用斜拉桥。本次现场调查未回收样本（0 份），以公开资料与桥梁群视角呈现。",
         "researchStatus": "待实地核验",
         "mediaIds": [],
-        "sourceIds": ["source-bridge-catalog"]
+        "sourceIds": ["source-bridge-catalog", "source-luqiao-interview", "source-luqiao-summary-2025"]
       }
     },
     {

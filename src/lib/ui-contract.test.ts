@@ -131,8 +131,46 @@ describe("dashboard interface contract", () => {
     expect(page).toContain('aria-label="市民之声"');
     expect(page).toContain('id="voice-list-online"');
     expect(page).toContain('id="voice-list-field"');
+    expect(page).toContain("问卷里的市民之声");
     expect(styles).toContain(".voice-quote");
     expect(styles).toContain(".voice-meta");
+  });
+
+  it("declares the two-way collapsible voice list and side-by-side tail layout", () => {
+    expect(styles).toContain(".voice-expand-toggle");
+    expect(styles).toContain(".voice-item[hidden]");
+    expect(styles).toContain(".tail-grid");
+    expect(styles).toMatch(
+      /\.tail-grid > \.voice-band,\s*\.tail-grid > \.governance-band\s*\{[^}]*margin-block-start: 0/,
+    );
+    expect(styles).toContain("@media (min-width: 981px)");
+    expect(styles).toContain("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)");
+  });
+
+  it("declares the governance band with its stat groups, quotes and disclaimers", () => {
+    expect(page).toContain('aria-label="治理侧记"');
+    expect(page).toContain('id="governance-band"');
+    expect(page).toContain('id="governance-intro"');
+    expect(page).toContain('id="governance-stat-groups"');
+    expect(page).toContain('id="governance-quotes"');
+    expect(page).toContain('id="governance-disclaimers"');
+    expect(styles).toContain(".governance-stat-value");
+    expect(styles).toContain(".governance-stat-source");
+    expect(styles).toContain(".quote--institution");
+    expect(styles).toContain(".governance-disclaimers");
+  });
+
+  it("keeps the governance heading aligned with the evidence headings", () => {
+    expect(page).toContain('class="governance-heading reveal"');
+    expect(styles).toMatch(
+      /\.map-header h1,\s*\.evidence-heading h2,\s*\.story-panel h2,\s*\.governance-heading h2\s*\{[^}]*font-weight: 800/,
+    );
+    expect(styles).toMatch(
+      /\.governance-heading h2\s*\{[^}]*clamp\(1\.5rem, 2\.6vw, 2\.45rem\)/,
+    );
+    expect(styles).toMatch(/\.governance-heading\s*\{[^}]*clamp\(1\.5rem, 3vw, 2\.5rem\)/);
+    expect(styles).toMatch(/\.governance-quote \.quote\s*\{[^}]*font-size: 0\.98rem/);
+    expect(styles).toMatch(/\.governance-note\s*\{[^}]*font-size: 0\.82rem/);
   });
 
   it("declares the map route legend and its document-style list", () => {

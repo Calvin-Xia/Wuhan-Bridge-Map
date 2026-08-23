@@ -7,6 +7,9 @@ dist/
 .env.*
 private-data/
 .playwright-mcp/
+.playwright-cli/
+.npm-cache/
+output/
 /current-8788.png
 wuhan-map-*.png
 npm-debug.log*

@@ -70,6 +70,44 @@ export interface StoryRecord {
   analysis: string[];
   ideologicalLink: string;
   evidenceLevel: string;
+  /** Governance case attached to a bridge story; paragraphs support `**text**` emphasis. */
+  institutionNote?: InstitutionNote;
+}
+
+export interface InstitutionNote {
+  /** Institution quote (e.g. interview excerpt), attached when available. */
+  quote?: string;
+  /** Required attribution label whenever `quote` is present. */
+  quoteLabel?: string;
+  /** Governance paragraphs; `**text**` marks inline emphasis. */
+  paragraphs: string[];
+}
+
+export interface GovernanceStat {
+  /** Display value, e.g. "17894 处" or "826 座". */
+  value: string;
+  label: string;
+  /** Source attribution, e.g. "据 2025 年工作总结". */
+  source: string;
+}
+
+export interface GovernanceStatGroup {
+  title: string;
+  items: GovernanceStat[];
+}
+
+export interface GovernanceQuote {
+  text: string;
+  /** Citation line shown under the quote, e.g. "根据访谈纸质记录整理 · 相关负责人介绍". */
+  cite: string;
+  note?: string;
+}
+
+export interface GovernanceRecord {
+  intro: string;
+  statGroups: GovernanceStatGroup[];
+  quotes: GovernanceQuote[];
+  disclaimers: string[];
 }
 
 export interface SourceRecord {
@@ -117,6 +155,7 @@ export interface ResearchDataset {
   routes?: RouteFeatureCollection;
   survey?: SurveySummary;
   voices?: VoiceRecord[];
+  governance?: GovernanceRecord;
 }
 
 const WUHAN_BOUNDS = {
@@ -297,6 +336,7 @@ export function validateResearchDataset(dataset: ResearchDataset): string[] {
     ...(dataset.routes ? validateRouteCollection(dataset.routes) : []),
     ...(dataset.survey ? validateSurveySummary(dataset.survey) : []),
     ...(dataset.voices ? validateVoices(dataset.voices) : []),
+    ...(dataset.governance ? validateGovernance(dataset.governance) : []),
   ];
 
   if (dataset.routes) {
@@ -352,6 +392,96 @@ export function validateResearchDataset(dataset: ResearchDataset): string[] {
         issues.push(`stories[${index}].surveyEvidence[${evidenceIndex}] must be a non-empty string`);
       }
     });
+
+    if (story.institutionNote) {
+      const note = story.institutionNote;
+
+      note.paragraphs.forEach((paragraph, paragraphIndex) => {
+        if (!paragraph.trim()) {
+          issues.push(`stories[${index}].institutionNote.paragraphs[${paragraphIndex}] must be a non-empty paragraph`);
+        }
+      });
+
+      if (note.quote !== undefined && !note.quote.trim()) {
+        issues.push(`stories[${index}].institutionNote.quote must be a non-empty string`);
+      }
+
+      if (note.quote && !note.quoteLabel?.trim()) {
+        issues.push(`stories[${index}].institutionNote.quoteLabel is required when institutionNote.quote is present`);
+      }
+    }
+  });
+
+  return issues;
+}
+
+export function validateGovernance(governance: GovernanceRecord): string[] {
+  const issues: string[] = [];
+
+  if (!governance.intro.trim()) {
+    issues.push("governance.intro is required");
+  }
+
+  if (governance.statGroups.length === 0) {
+    issues.push("governance.statGroups must include at least one group");
+  }
+
+  governance.statGroups.forEach((group, groupIndex) => {
+    const prefix = `governance.statGroups[${groupIndex}]`;
+
+    if (!group.title.trim()) {
+      issues.push(`${prefix}.title is required`);
+    }
+
+    if (group.items.length === 0) {
+      issues.push(`${prefix}.items must include at least one stat`);
+    }
+
+    group.items.forEach((item, itemIndex) => {
+      const itemPrefix = `${prefix}.items[${itemIndex}]`;
+
+      if (!item.value.trim()) {
+        issues.push(`${itemPrefix}.value is required`);
+      }
+
+      if (!item.label.trim()) {
+        issues.push(`${itemPrefix}.label is required`);
+      }
+
+      if (!item.source.trim()) {
+        issues.push(`${itemPrefix}.source is required`);
+      }
+    });
+  });
+
+  if (governance.quotes.length === 0) {
+    issues.push("governance.quotes must include at least one quote");
+  }
+
+  governance.quotes.forEach((quote, quoteIndex) => {
+    const prefix = `governance.quotes[${quoteIndex}]`;
+
+    if (!quote.text.trim()) {
+      issues.push(`${prefix}.text is required`);
+    }
+
+    if (!quote.cite.trim()) {
+      issues.push(`${prefix}.cite is required`);
+    }
+
+    if (quote.note !== undefined && !quote.note.trim()) {
+      issues.push(`${prefix}.note must be a non-empty string`);
+    }
+  });
+
+  if (governance.disclaimers.length === 0) {
+    issues.push("governance.disclaimers must include at least one disclaimer");
+  }
+
+  governance.disclaimers.forEach((disclaimer, disclaimerIndex) => {
+    if (!disclaimer.trim()) {
+      issues.push(`governance.disclaimers[${disclaimerIndex}] must be a non-empty string`);
+    }
   });
 
   return issues;

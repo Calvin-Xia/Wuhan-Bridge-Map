@@ -158,7 +158,8 @@ button:focus-visible {
 
 .map-header h1,
 .evidence-heading h2,
-.story-panel h2 {
+.story-panel h2,
+.governance-heading h2 {
   margin: 0;
   color: var(--text-strong);
   font-weight: 800;
@@ -875,6 +876,208 @@ button:focus-visible {
   color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.65;
+}
+
+.voice-item[hidden] {
+  display: none;
+}
+
+.voice-expand {
+  padding-block-start: 0.9rem;
+}
+
+.voice-expand-toggle {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent-hover);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.voice-expand-toggle:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.tail-grid {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  max-width: 74rem;
+  margin-inline: auto;
+  margin-block-start: clamp(2rem, 4vw, 3rem);
+}
+
+@media (min-width: 981px) {
+  .tail-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.tail-grid > .voice-band,
+.tail-grid > .governance-band {
+  max-width: none;
+  margin-inline: 0;
+  margin-block-start: 0;
+}
+
+.governance-band {
+  min-width: 0;
+}
+
+.governance-heading {
+  display: grid;
+  gap: 0.45rem;
+  margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.governance-heading h2 {
+  max-width: 22ch;
+  font-size: clamp(1.5rem, 2.6vw, 2.45rem);
+  line-height: 1.2;
+}
+
+.governance-stat-groups {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.governance-group {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+}
+
+.governance-group h3 {
+  margin: 0 0 0.8rem;
+  color: var(--text-strong);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+
+.governance-stats {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.governance-stat {
+  display: grid;
+  grid-template-columns: minmax(4.8rem, auto) minmax(0, 1fr);
+  gap: 0.5rem 0.8rem;
+  align-items: start;
+  padding-block-start: 0.85rem;
+  border-block-start: 1px solid var(--border);
+}
+
+.governance-stat:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.governance-stat-value {
+  color: var(--accent-hover);
+  font-family: var(--font-number);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.governance-stat-body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.governance-stat-label {
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.governance-stat-source {
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.governance-quotes {
+  display: grid;
+  gap: 1.3rem;
+  margin: clamp(1.75rem, 3.5vw, 2.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.governance-quote {
+  min-width: 0;
+}
+
+.quote--institution {
+  border-inline-start-color: var(--accent);
+}
+
+.quote--institution cite {
+  color: var(--text-tertiary);
+}
+
+.governance-quote .quote {
+  font-size: 0.98rem;
+  line-height: 1.8;
+}
+
+.governance-note {
+  margin: 0.5rem 0 0;
+  padding-inline-start: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.governance-subheading {
+  margin: clamp(1.75rem, 3.5vw, 2.5rem) 0 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+
+.governance-disclaimers {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.9rem 1.05rem;
+  border-inline-start: 3px solid var(--border-strong);
+  background: var(--surface-alt);
+  list-style: none;
+}
+
+.governance-disclaimers li {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.story-section--institution .quote {
+  margin-block-start: 0.9rem;
 }
 
 .chart-block {

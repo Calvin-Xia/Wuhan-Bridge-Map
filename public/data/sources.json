@@ -61,5 +61,19 @@
     "type": "field-note",
     "access": "team-private",
     "note": "公开地图只展示脱敏摘要，完整记录保存在 private-data。"
+  },
+  {
+    "id": "source-luqiao-interview",
+    "title": "路桥中心访谈记录（2026-07-22）",
+    "type": "interview",
+    "access": "team-private",
+    "note": "访谈单位：武汉市城市道路桥隧事务中心；引语根据访谈纸质记录整理，不公开转录全文。"
+  },
+  {
+    "id": "source-luqiao-summary-2025",
+    "title": "路桥中心 2025 年工作总结（归纳）",
+    "type": "document",
+    "access": "team-private",
+    "note": "基于提供的工作总结材料照片归纳重点；公开地图仅展示摘要数据与口径。"
   }
 ]

@@ -13,6 +13,14 @@ import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bri
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { INITIAL_MAP_VIEW } from "../lib/map-view";
 import {
+  getStoryPanelOffsetTop,
+  getStoryWindowTop,
+  readStoryScroll,
+  resolveStoryScrollContainer,
+  resolveStoryScrollTarget,
+  type StoryScrollMetrics,
+} from "../lib/story-scroll";
+import {
   createBridgeMapLayers,
   DARK_MAP_THEME,
   LIGHT_MAP_THEME,
@@ -268,6 +276,20 @@ function renderStoryPanel(bridgeId: string) {
 
   const analysisMarkup = story.analysis.map((paragraph) => `<p>${renderEmphasis(paragraph)}</p>`).join("");
 
+  const institutionMarkup = story.institutionNote
+    ? `<section class="story-section story-section--institution">
+        <h3>治理与管养</h3>
+        ${
+          story.institutionNote.quote
+            ? `<blockquote class="quote quote--institution">${escapeHtml(story.institutionNote.quote)}${
+                story.institutionNote.quoteLabel ? `<cite>${escapeHtml(story.institutionNote.quoteLabel)}</cite>` : ""
+              }</blockquote>`
+            : ""
+        }
+        ${story.institutionNote.paragraphs.map((paragraph) => `<p>${renderEmphasis(paragraph)}</p>`).join("")}
+      </section>`
+    : "";
+
   panel.innerHTML = `
     <p class="section-label">当前点位 · ${escapeHtml(bridge.properties.river)} · ${bridge.properties.openedYear}</p>
     <h2>${escapeHtml(bridge.properties.name)}</h2>
@@ -285,6 +307,7 @@ function renderStoryPanel(bridgeId: string) {
       <h3>调研分析</h3>
       ${analysisMarkup}
     </section>
+    ${institutionMarkup}
     <section class="story-section">
       <h3>思政连接</h3>
       <p>${escapeHtml(story.ideologicalLink)}</p>
@@ -296,9 +319,27 @@ function renderStoryPanel(bridgeId: string) {
 }
 
 function selectBridge(bridgeId: string, moveMap: boolean) {
-  state.activeBridgeId = bridgeId;
-  markActiveBridge();
-  renderStoryPanel(bridgeId);
+  const isNewBridge = bridgeId !== state.activeBridgeId;
+
+  if (isNewBridge) {
+    const outgoingId = state.activeBridgeId;
+    if (outgoingId) {
+      storyScrollMemory.set(outgoingId, readStoryScroll(getStoryScrollMetrics()));
+    }
+
+    state.activeBridgeId = bridgeId;
+    markActiveBridge();
+    renderStoryPanel(bridgeId);
+
+    const savedScroll = storyScrollMemory.get(bridgeId);
+    if (savedScroll === undefined) {
+      // 首次查看：快速平滑回顶；同桥点击不触发（见下方同一分支）。
+      requestAnimationFrame(() => scrollStoryToTop());
+    } else {
+      // 切回已读过的桥：瞬时恢复进度，避免视觉跳变。
+      requestAnimationFrame(() => restoreStoryScroll(savedScroll));
+    }
+  }
 
   if (!moveMap || !state.map) return;
 
@@ -310,6 +351,83 @@ function selectBridge(bridgeId: string, moveMap: boolean) {
     zoom: 12.3,
     duration: 600,
   });
+}
+
+const storyScrollMemory = new Map<string, number>();
+const STORY_SCROLL_DURATION = 180;
+
+function getStoryScrollMetrics(): StoryScrollMetrics {
+  const panel = byId("story-panel");
+  return {
+    viewportWidth: window.innerWidth,
+    panelScrollTop: panel.scrollTop,
+    panelOffsetTop: getStoryPanelOffsetTop(panel.getBoundingClientRect().top, window.scrollY),
+    panelScrollHeight: panel.scrollHeight,
+    panelClientHeight: panel.clientHeight,
+    windowScrollY: window.scrollY,
+    windowInnerHeight: window.innerHeight,
+    documentHeight: document.documentElement.scrollHeight,
+  };
+}
+
+function restoreStoryScroll(memory: number) {
+  const target = resolveStoryScrollTarget(getStoryScrollMetrics(), memory);
+  if (target.container === "panel") {
+    byId("story-panel").scrollTop = target.value;
+  } else {
+    window.scrollTo(0, getStoryWindowTop(getStoryScrollMetrics().panelOffsetTop) + target.value);
+  }
+}
+
+function scrollStoryToTop() {
+  const metrics = getStoryScrollMetrics();
+  const panel = byId("story-panel");
+  const container = resolveStoryScrollContainer(metrics.viewportWidth);
+
+  if (container === "panel") {
+    animateScroll(panel, panel.scrollTop, 0, STORY_SCROLL_DURATION);
+  } else {
+    const windowTop = getStoryWindowTop(metrics.panelOffsetTop);
+    animateWindowScroll(window.scrollY, windowTop, STORY_SCROLL_DURATION);
+  }
+}
+
+function animateScroll(element: HTMLElement, from: number, to: number, duration: number) {
+  if (prefersReducedMotion() || from === to) {
+    element.scrollTop = to;
+    return;
+  }
+
+  const start = performance.now();
+  const step = (now: number) => {
+    const progress = Math.min(1, (now - start) / duration);
+    element.scrollTop = from + (to - from) * easeOutCubic(progress);
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function animateWindowScroll(from: number, to: number, duration: number) {
+  if (prefersReducedMotion() || from === to) {
+    window.scrollTo(0, to);
+    return;
+  }
+
+  const start = performance.now();
+  const step = (now: number) => {
+    const progress = Math.min(1, (now - start) / duration);
+    window.scrollTo(0, from + (to - from) * easeOutCubic(progress));
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function easeOutCubic(progress: number): number {
+  return 1 - Math.pow(1 - progress, 3);
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function markActiveBridge() {
