@@ -32,6 +32,8 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 - `story.institutionNote`（可选）：治理与管养区块；`paragraphs` 段落数组支持 `**重点**`，含 `quote` 时 `quoteLabel` 必填
 - `governance.json`：`statGroups`（数据卡，每项带 value/label/source 口径）/ `quotes`（引语，含 cite）/ `disclaimers`（口径说明）
 - 路桥中心数据口径：访谈记录 878 座/829 座接入平台，工作总结 826 座全覆盖——**并存标注，禁止合并**；朱家河 20 吨/白沙洲 30 吨为历史限载案例
+- 深度链接：`#bridge-<id>` 选桥（打开时定位地图，切换时 `history.replaceState` 写回，不产生历史记录）；页头导航用 `#section-map` / `#section-evidence` / `#section-voices` / `#section-governance`（`src/lib/bridge-hash.ts`）
+- 指标口径：指标卡"类证据 5"= 公开资料 · 问卷封闭题 · 问卷开放题（市民之声为其呈现形式）· 团队实地记录 · 机构访谈，与 sources.json 的 type 字段（4 类）有意不同，勿按字段数改
 - 路线属性含 `group`/`date`/`sampleCount`；串联线坐标必须逐一等于桥心（`bridge-chain.ts` 校验）
 - 问卷口径：网络版 228 份、现场版 57 份、开放题网络 72 条/现场 22 条；图表多选数据用横向条形，不写"公众普遍"类推断
 - 地图 hover 用 `setPaintProperty` 整层强调；**不使用 feature-state/promoteId**（曾导致线条渲染异常）
@@ -46,7 +48,8 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 
 ## 当前状态与下一步
 
-- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 71 项全过
+- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 80 项全过
+- 深链与导航：`#bridge-<id>` 选桥（加载定位 + replaceState 写回）、页头 4 个章节锚点（平滑滚动，尊重 reduced-motion）；"类证据 5"指标卡已加形态说明
 - 故事卡交互：切桥快速平滑回顶（`prefers-reduced-motion` 时瞬时），每桥进度会话内记忆（桌面面板级 / 移动页面级，`src/lib/story-scroll.ts`）；同桥点击不滚动
 - 尾部双列：市民之声每列默认收起至前 3 条/治理侧记默认展示 2 组数据卡 + 2 条引语，均为双向展开/收起（按钮带 `aria-expanded`），口径说明常显
 - `dist/` 已随 2026-08-23 的 `npm run build` 更新

@@ -33,7 +33,7 @@ async function initGovernance() {
 
     statGroups.setAttribute("aria-busy", "false");
     quotes.setAttribute("aria-busy", "false");
-    document.getElementById("governance-band")?.setAttribute("aria-busy", "false");
+    document.getElementById("section-governance")?.setAttribute("aria-busy", "false");
   } catch (error) {
     console.error("Failed to load governance records", error);
     intro.textContent = "治理数据载入失败，请检查 public/data/governance.json。";

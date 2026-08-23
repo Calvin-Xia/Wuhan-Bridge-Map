@@ -34,16 +34,24 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
   </head>
   <body>
     <main class="app-shell">
-      <section class="map-stage page-enter" aria-label="武汉桥梁群地图">
+      <section class="map-stage page-enter" id="section-map" aria-label="武汉桥梁群地图">
         <header class="map-header">
           <p class="kicker">武汉桥梁群 · 大思政实践</p>
           <h1>{title}</h1>
           <p class="page-summary">{description}</p>
+          <nav class="header-nav" aria-label="页面分区跳转">
+            <a href="#section-map">地图·一桥一问</a>
+            <a href="#section-evidence">问卷证据</a>
+            <a href="#section-voices">市民之声</a>
+            <a href="#section-governance">治理侧记</a>
+          </nav>
           <div class="header-side">
             <dl class="metric-strip" aria-label="项目指标">
               <div><dt>座桥</dt><dd><strong id="bridge-count">8</strong></dd><small class="metric-code">BRIDGES</small></div>
               <div><dt>条路线</dt><dd><strong>4</strong></dd><small class="metric-code">ROUTES</small></div>
-              <div><dt>类证据</dt><dd><strong>5</strong></dd><small class="metric-code">EVIDENCE</small></div>
+              <div title="公开资料 · 问卷封闭题 · 问卷开放题 · 团队实地记录 · 机构访谈">
+                <dt>类证据</dt><dd><strong>5</strong></dd><small class="metric-code">EVIDENCE</small>
+              </div>
             </dl>
             <button
               id="theme-toggle"
@@ -98,7 +106,7 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
         </section>
       </section>
 
-      <section class="evidence-band" aria-label="问卷与调研证据">
+      <section class="evidence-band" id="section-evidence" aria-label="问卷与调研证据">
         <header class="evidence-heading reveal">
           <p class="section-label">问卷与开放题证据</p>
           <h2>认知、价值与治理期待：两份问卷的交叉印证</h2>
@@ -183,7 +191,7 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
           </figure>
         </section>
         <div class="tail-grid">
-          <section class="voice-band" aria-label="市民之声">
+          <section class="voice-band" id="section-voices" aria-label="市民之声">
             <header class="evidence-heading reveal">
               <p class="section-label">市民之声</p>
               <h2>问卷里的市民之声</h2>
@@ -200,7 +208,7 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
               <ul id="voice-list-field" class="voice-list" aria-busy="true"></ul>
             </div>
           </section>
-          <section class="governance-band" id="governance-band" aria-label="治理侧记" aria-busy="true">
+          <section class="governance-band" id="section-governance" aria-label="治理侧记" aria-busy="true">
             <header class="governance-heading reveal">
               <p class="section-label">治理侧记</p>
               <h2>从日常巡护到智慧治理</h2>

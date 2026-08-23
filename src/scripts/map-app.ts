@@ -11,6 +11,7 @@ import type {
 } from "../lib/data-validation";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
+import { buildBridgeHash, parseBridgeHash } from "../lib/bridge-hash";
 import { INITIAL_MAP_VIEW } from "../lib/map-view";
 import {
   getStoryPanelOffsetTop,
@@ -68,7 +69,12 @@ async function initMapApp() {
     state.stories = stories;
     state.sources = sources;
     state.routes = routes;
-    state.activeBridgeId = state.bridges[0]?.properties.id ?? "";
+    // 深度链接：#bridge-<id> 打开时直接选中该桥。
+    const hashBridgeId = parseBridgeHash(window.location.hash);
+    state.activeBridgeId =
+      (hashBridgeId && bridges.features.find((item) => item.properties.id === hashBridgeId)
+        ? hashBridgeId
+        : bridges.features[0]?.properties.id) ?? "";
 
     updateBridgeCount(state.bridges.length);
     renderBridgeList();
@@ -123,6 +129,17 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
     applyMapTheme(getDocumentTheme());
 
     renderBridgeMapLabels();
+
+    const focusBridge = bridges.features.find(
+      (item) => item.properties.id === state.activeBridgeId,
+    );
+    if (focusBridge && parseBridgeHash(window.location.hash)) {
+      // 深度链接定位：打开 #bridge-<id> 时把地图居中到该桥。
+      map.jumpTo({
+        center: focusBridge.geometry.coordinates,
+        zoom: 12.3,
+      });
+    }
 
     map.on("click", "bridge-points", (event) => {
       const feature = event.features?.[0] as BridgeFeature | undefined;
@@ -339,6 +356,9 @@ function selectBridge(bridgeId: string, moveMap: boolean) {
       // 切回已读过的桥：瞬时恢复进度，避免视觉跳变。
       requestAnimationFrame(() => restoreStoryScroll(savedScroll));
     }
+
+    // 深链写回：URL 与当前选中桥保持同步，但不产生历史记录。
+    window.history?.replaceState(null, "", buildBridgeHash(bridgeId));
   }
 
   if (!moveMap || !state.map) return;

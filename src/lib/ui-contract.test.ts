@@ -149,7 +149,7 @@ describe("dashboard interface contract", () => {
 
   it("declares the governance band with its stat groups, quotes and disclaimers", () => {
     expect(page).toContain('aria-label="治理侧记"');
-    expect(page).toContain('id="governance-band"');
+    expect(page).toContain('id="section-governance"');
     expect(page).toContain('id="governance-intro"');
     expect(page).toContain('id="governance-stat-groups"');
     expect(page).toContain('id="governance-quotes"');
@@ -171,6 +171,42 @@ describe("dashboard interface contract", () => {
     expect(styles).toMatch(/\.governance-heading\s*\{[^}]*clamp\(1\.5rem, 3vw, 2\.5rem\)/);
     expect(styles).toMatch(/\.governance-quote \.quote\s*\{[^}]*font-size: 0\.98rem/);
     expect(styles).toMatch(/\.governance-note\s*\{[^}]*font-size: 0\.82rem/);
+  });
+
+  it("declares accessible touch targets and small-text sizes", () => {
+    expect(styles).toMatch(/\.voice-expand-toggle\s*\{[^}]*min-height: 2\.75rem/);
+    expect(styles).toMatch(/\.maplibregl-ctrl-group button\s*\{[^}]*width: 44px !important/);
+    expect(styles).toMatch(/\.map-legend-title\s*\{[^}]*font-size: 0\.75rem/);
+    expect(styles).toMatch(/\.governance-stat-source\s*\{[^}]*font-size: 0\.75rem/);
+    expect(styles).toContain("--text-secondary: #56645e");
+    expect(styles).toContain("--text-tertiary: #586660");
+  });
+
+  it("keeps chips and toggles on the shared small radius instead of capsules", () => {
+    expect(styles).toMatch(/\.tag,\s*\.source-chip\s*\{[^}]*border-radius: var\(--radius\)/);
+    expect(styles).toMatch(/\.voice-expand-toggle\s*\{[^}]*border-radius: var\(--radius\)/);
+    expect(styles).toMatch(/\.header-nav a\s*\{[^}]*border-radius: var\(--radius\)/);
+    expect(styles).toMatch(/\.header-nav a\s*\{[^}]*font-weight: 700/);
+  });
+
+  it("declares the header section-jump navigation and section anchors", () => {
+    expect(page).toContain('class="header-nav" aria-label="页面分区跳转"');
+    expect(page).toContain('href="#section-map"');
+    expect(page).toContain('href="#section-evidence"');
+    expect(page).toContain('href="#section-voices"');
+    expect(page).toContain('href="#section-governance"');
+    expect(page).toContain('id="section-map"');
+    expect(page).toContain('id="section-evidence"');
+    expect(page).toContain('id="section-voices"');
+    expect(styles).toContain(".header-nav");
+    expect(styles).toMatch(/\.header-nav a\s*\{[^}]*min-height: 2\.75rem/);
+    expect(styles).toContain("scroll-behavior: smooth");
+  });
+
+  it("declares the evidence-classes metric with its five-form note", () => {
+    expect(page).toContain(
+      'title="公开资料 · 问卷封闭题 · 问卷开放题 · 团队实地记录 · 机构访谈"',
+    );
   });
 
   it("declares the map route legend and its document-style list", () => {
