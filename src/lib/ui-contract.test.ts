@@ -189,6 +189,10 @@ describe("dashboard interface contract", () => {
     expect(styles).toMatch(/\.header-nav a\s*\{[^}]*font-weight: 700/);
   });
 
+  it("keeps the mobile header on a single column with the nav row", () => {
+    expect(styles).toMatch(/"kicker"\s*"title"\s*"summary"\s*"nav"\s*"side"/);
+  });
+
   it("declares the header section-jump navigation and section anchors", () => {
     expect(page).toContain('class="header-nav" aria-label="页面分区跳转"');
     expect(page).toContain('href="#section-map"');

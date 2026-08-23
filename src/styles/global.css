@@ -1286,6 +1286,7 @@ button:focus-visible {
       "kicker"
       "title"
       "summary"
+      "nav"
       "side";
     grid-template-columns: 1fr;
   }
