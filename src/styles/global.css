@@ -722,6 +722,24 @@ button:focus-visible {
   line-height: 1.5;
 }
 
+.bridge-map-point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  cursor: pointer;
+}
+
+.bridge-map-dot {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  background: var(--point-fill, #08768d);
+  border: 1.5px solid var(--map-point-stroke, currentColor);
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px var(--map-point-halo, rgb(var(--surface-rgb) / 0.88));
+}
+
 .bridge-map-label {
   display: block;
   max-width: 8.5rem;
@@ -735,55 +753,13 @@ button:focus-visible {
   pointer-events: none;
 }
 
-.maplibregl-ctrl-attrib {
-  padding: 0.25rem 0.45rem;
-  color: var(--text-secondary);
-  background: rgb(var(--surface-rgb) / 0.9);
-  border: 1px solid var(--border);
-  border-top-left-radius: var(--radius);
+/* AMap 官方控件与 InfoWindow 配色贴合站点主题 */
+.amap-logo,
+.amap-copyright {
+  opacity: 0.9;
 }
 
-.maplibregl-ctrl-attrib a {
-  color: var(--accent-hover);
-}
-
-.maplibregl-ctrl-group {
-  overflow: hidden;
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius);
-  box-shadow: 0 8px 18px rgb(var(--text-rgb) / 0.12) !important;
-}
-
-.maplibregl-ctrl-group button {
-  width: 44px !important;
-  height: 44px !important;
-  background-color: var(--surface) !important;
-  border-block-end: 1px solid var(--border);
-}
-
-.maplibregl-ctrl-group button:last-child {
-  border-block-end: 0;
-}
-
-.maplibregl-ctrl-group button:hover {
-  background-color: var(--surface-hover) !important;
-}
-
-.maplibregl-ctrl-group button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -3px;
-}
-
-.maplibregl-ctrl-group .maplibregl-ctrl-icon {
-  filter: none;
-}
-
-:root[data-theme="dark"] .maplibregl-ctrl-group .maplibregl-ctrl-icon {
-  filter: invert(0.86);
-}
-
-.maplibregl-popup-content {
+.amap-info-content {
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -792,9 +768,12 @@ button:focus-visible {
   font-family: var(--font-sans);
 }
 
-.maplibregl-popup-tip {
-  border-top-color: var(--surface);
-  border-bottom-color: var(--surface);
+.amap-info-outer {
+  background: transparent;
+}
+
+.amap-info-nub {
+  color: var(--surface);
 }
 
 .popup-title {

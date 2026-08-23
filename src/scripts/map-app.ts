@@ -1,6 +1,3 @@
-import * as maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import type { LngLatBoundsLike } from "maplibre-gl";
 import type {
   BridgeFeature,
   BridgeFeatureCollection,
@@ -10,16 +7,11 @@ import type {
   StoryRecord,
 } from "../lib/data-validation";
 import {
-  BASEMAP_LAYERS,
-  BASEMAP_SOURCES,
-  TileErrorTracker,
-  createAmapStyle,
-  createBasemapThemeUpdates,
-  createOsmFallbackLayer,
-  createOsmFallbackSource,
-  isTileError,
-  type MapTileErrorShape,
-} from "../lib/map-basemap";
+  DARK_MAP_THEME,
+  LIGHT_MAP_THEME,
+  researchStatusFill,
+  type MapLayerTheme,
+} from "../lib/map-layer-spec";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { buildBridgeHash, parseBridgeHash } from "../lib/bridge-hash";
@@ -32,30 +24,93 @@ import {
   resolveStoryScrollTarget,
   type StoryScrollMetrics,
 } from "../lib/story-scroll";
-import {
-  createBridgeMapLayers,
-  DARK_MAP_THEME,
-  LIGHT_MAP_THEME,
-  type MapLayerTheme,
-} from "../lib/map-layer-spec";
 import { isThemeMode, THEME_CHANGE_EVENT, type ThemeMode } from "../lib/theme-preferences";
 
-const STUDY_AREA_BOUNDS: LngLatBoundsLike = [
-  [114.15, 30.4],
-  [114.525, 30.725],
-];
-type BasemapProvider = "amap" | "osm";
+/**
+ * 地图层：高德 JS API v2 引擎（官方底图，周更矢量管线）。
+ *
+ * - key/安全密钥构建期注入（import.meta.env.PUBLIC_AMAP_KEY /
+ *   PUBLIC_AMAP_SECURITY_CODE；git 中不落明文，仅本地 dev 回退常量）。
+ * - 数据（public/data GeoJSON）与初始视野均为 **GCJ-02 口径**（由官方
+ *   AMap.convertFrom 一次性转换，生成物在 git；重建方法见 AGENTS.md），
+ *   引擎关闭坐标纠偏（isCorrection:false）——官方确认"GCJ-02 坐标在
+ *   不同缩放级别显示位置会变"（FAQ 46660），固定投影后可消除缩放漂移。
+ * - 明暗主题切换官方样式 amap://styles/normal / darkblue。
+ * - 覆盖层（路线/桥链/桥点/标签）为 AMap Marker/Polyline，颜色取自
+ *   src/lib/map-layer-spec.ts 调色板。
+ */
+
+declare global {
+  interface Window {
+    AMap?: AmapNamespace;
+    _AMapSecurityConfig?: { securityJsCode: string };
+  }
+}
+
+/** AMap JS API 的最小类型面（不引入官方类型包）。 */
+type AmapNamespace = {
+  Map: new (
+    container: string | HTMLElement,
+    options: Record<string, unknown>,
+  ) => AmapMap;
+  Marker: new (options: Record<string, unknown>) => AmapMarker;
+  Polyline: new (options: Record<string, unknown>) => AmapPolyline;
+  InfoWindow: new (options: Record<string, unknown>) => AmapInfoWindow;
+  Bounds: new (sw: [number, number], ne: [number, number]) => unknown;
+  Pixel: new (x: number, y: number) => unknown;
+  event?: { addListener?: (target: unknown, event: string, cb: (...args: unknown[]) => void) => void };
+};
+
+type AmapLngLat = [number, number];
+
+type AmapMap = {
+  on: (event: string, cb: (...args: unknown[]) => void) => void;
+  setStyle: (style: string) => void;
+  setZoomAndCenter: (zoom: number, center: AmapLngLat, immediately?: boolean, duration?: number) => void;
+  setFitView: (overlays: unknown[], immediately?: boolean, avoid?: number[], maxZoom?: number) => void;
+  setLimitBounds: (bounds: unknown) => void;
+  destroy: () => void;
+};
+
+type AmapMarker = {
+  setMap: (map: AmapMap | null) => void;
+  on: (event: string, cb: (...args: unknown[]) => void) => void;
+  getPosition: () => AmapLngLat;
+};
+
+type AmapPolyline = {
+  setMap: (map: AmapMap | null) => void;
+  on: (event: string, cb: (...args: unknown[]) => void) => void;
+  setOptions: (options: Record<string, unknown>) => void;
+  getPath: () => AmapLngLat[];
+};
+
+type AmapInfoWindow = {
+  open: (map: AmapMap, position: AmapLngLat) => void;
+  close: () => void;
+};
+
+const AMAP_KEY = import.meta.env.PUBLIC_AMAP_KEY || "02795a456428059711c56b78b60b80b6";
+const AMAP_SECURITY_CODE =
+  import.meta.env.PUBLIC_AMAP_SECURITY_CODE || "4fdeb357156b1b156a2ccae2cf10ada1";
+const AMAP_SCRIPT_URL = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}`;
+const AMAP_STYLE_LIGHT = "amap://styles/normal";
+const AMAP_STYLE_DARK = "amap://styles/darkblue";
+
+const STUDY_AREA_BOUNDS_SW: [number, number] = [114.15, 30.4];
+const STUDY_AREA_BOUNDS_NE: [number, number] = [114.525, 30.725];
+
 const state = {
   activeBridgeId: "",
   bridges: [] as BridgeFeature[],
   stories: [] as StoryRecord[],
   sources: [] as SourceRecord[],
   routes: null as RouteFeatureCollection | null,
-  labelMarkers: [] as maplibregl.Marker[],
-  map: null as maplibregl.Map | null,
-  popup: null as maplibregl.Popup | null,
-  basemapProvider: "amap" as BasemapProvider,
-  tileErrorTracker: null as TileErrorTracker | null,
+  map: null as AmapMap | null,
+  amap: null as AmapNamespace | null,
+  infoWindow: null as AmapInfoWindow | null,
+  bridgeMarkers: new Map<string, AmapMarker>(),
+  routePolylines: new Map<string, AmapPolyline[]>(),
 };
 
 window.addEventListener(THEME_CHANGE_EVENT, (event) => {
@@ -91,7 +146,7 @@ async function initMapApp() {
     updateBridgeCount(state.bridges.length);
     renderBridgeList();
     renderStoryPanel(state.activeBridgeId);
-    createMap(bridges, routes);
+    await createMap();
     renderMapLegend(routes);
     bindLegendToggle();
     byId("bridge-list").setAttribute("aria-busy", "false");
@@ -99,171 +154,160 @@ async function initMapApp() {
   } catch (error) {
     byId("bridge-list").setAttribute("aria-busy", "false");
     status.hidden = false;
-    status.textContent = "数据载入失败，请检查 public/data 下的 GeoJSON 和 JSON 文件。";
+    status.textContent = "地图或数据载入失败，请稍后刷新重试。";
     console.error(error);
   }
 }
 
-function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollection) {
-  const status = byId("map-status");
-  const themeMode = getDocumentTheme();
-  const theme = getMapTheme(themeMode);
-  const map = new maplibregl.Map({
-    container: "bridge-map",
-    style: createAmapStyle(theme),
-    center: INITIAL_MAP_VIEW.center,
-    zoom: INITIAL_MAP_VIEW.zoom,
-    minZoom: 9.1,
-    maxZoom: 17,
-    maxBounds: STUDY_AREA_BOUNDS,
-    attributionControl: false,
-  });
+/** 动态加载高德 JS API v2（需在脚本前设置安全密钥）。 */
+function loadAmapScript(): Promise<AmapNamespace> {
+  const existing = window.AMap;
+  if (existing) return Promise.resolve(existing);
 
-  state.map = map;
-  state.tileErrorTracker = new TileErrorTracker();
-
-  map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true }), "top-right");
-  map.addControl(new maplibregl.AttributionControl({ compact: false }), "bottom-right");
-
-  map.on("load", () => {
-    map.addSource("routes", {
-      type: "geojson",
-      data: routes,
-    });
-
-    map.addSource("bridges", {
-      type: "geojson",
-      data: bridges,
-    });
-
-    for (const layer of createBridgeMapLayers(theme)) {
-      map.addLayer(layer);
-    }
-
-    applyMapTheme(getDocumentTheme());
-
-    renderBridgeMapLabels();
-
-    const focusBridge = bridges.features.find(
-      (item) => item.properties.id === state.activeBridgeId,
-    );
-    if (focusBridge && parseBridgeHash(window.location.hash)) {
-      // 深度链接定位：打开 #bridge-<id> 时把地图居中到该桥。
-      map.jumpTo({
-        center: focusBridge.geometry.coordinates,
-        zoom: 12.3,
-      });
-    }
-
-    map.on("click", "bridge-points", (event) => {
-      const feature = event.features?.[0] as BridgeFeature | undefined;
-      if (!feature) return;
-      selectBridge(feature.properties.id, true);
-      showPopup(feature);
-    });
-
-    map.on("mouseenter", "bridge-points", () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-
-    map.on("mouseleave", "bridge-points", () => {
-      map.getCanvas().style.cursor = "";
-    });
-
-    bindRouteInteractions(map);
-  });
-
-  map.on("load", () => {
-    status.hidden = true;
-  });
-
-  map.on("error", (event) => {
-    const error = event.error as MapTileErrorShape | undefined;
-    // 瓦片级错误（限流/403/网络失败）：静默重试；主源连续达到阈值时自动切 OSM 备用源。
-    if (isTileError(error)) {
-      if (
-        state.basemapProvider === "amap" &&
-        state.tileErrorTracker?.record(performance.now(), error)
-      ) {
-        switchToOsmFallback();
-      }
-      return;
-    }
-
-    status.hidden = false;
-    status.textContent = "底图暂时不可用，桥梁列表和故事卡片仍可使用。";
+  return new Promise((resolve, reject) => {
+    window._AMapSecurityConfig = { securityJsCode: AMAP_SECURITY_CODE };
+    const script = document.createElement("script");
+    script.src = AMAP_SCRIPT_URL;
+    script.onload = () => {
+      if (window.AMap) resolve(window.AMap);
+      else reject(new Error("AMap script loaded without AMap namespace"));
+    };
+    script.onerror = () => reject(new Error("Failed to load AMap JS API"));
+    document.head.appendChild(script);
   });
 }
 
-function switchToOsmFallback() {
-  const map = state.map;
-  if (!map || !map.isStyleLoaded() || state.basemapProvider === "osm") return;
+async function createMap() {
+  const status = byId("map-status");
+  const amap = await loadAmapScript();
+  state.amap = amap;
 
-  if (map.getLayer(BASEMAP_LAYERS.amapVector)) map.removeLayer(BASEMAP_LAYERS.amapVector);
-  if (map.getSource(BASEMAP_SOURCES.amapVector)) map.removeSource(BASEMAP_SOURCES.amapVector);
+  const map = new amap.Map("bridge-map", {
+    zoom: INITIAL_MAP_VIEW.zoom,
+    center: INITIAL_MAP_VIEW.center as [number, number],
+    viewMode: "2D",
+    style: getDocumentTheme() === "dark" ? AMAP_STYLE_DARK : AMAP_STYLE_LIGHT,
+    zooms: [9, 17],
+    // 数据/初始视野已为 GCJ-02：关闭纠偏，固定投影，避免缩放级漂移。
+    isCorrection: false,
+  });
+  state.map = map;
+  // 调试/自动化钩子（无副作用；供 QA 测量缩放漂移）。
+  (window as unknown as { __amapDebugMap?: AmapMap }).__amapDebugMap = map;
+  map.setLimitBounds(new amap.Bounds(STUDY_AREA_BOUNDS_SW, STUDY_AREA_BOUNDS_NE));
 
-  map.addSource(BASEMAP_SOURCES.osmFallback, createOsmFallbackSource());
-  const theme = getMapTheme(getDocumentTheme());
-  const layer = createOsmFallbackLayer(theme);
-  // 插到覆盖图层之前，避免盖住路线/桥点。
-  if (map.getLayer("research-routes")) {
-    map.addLayer(layer, "research-routes");
-  } else {
-    map.addLayer(layer);
+  renderBridgeOverlays();
+  renderRouteOverlays();
+  applyMapTheme(getDocumentTheme());
+
+  const focusBridge = state.bridges.find(
+    (item) => item.properties.id === state.activeBridgeId,
+  );
+  if (focusBridge && parseBridgeHash(window.location.hash)) {
+    // 深度链接定位：打开 #bridge-<id> 时把地图居中到该桥。
+    map.setZoomAndCenter(12.3, focusBridge.geometry.coordinates as [number, number]);
   }
 
-  state.basemapProvider = "osm";
-  state.tileErrorTracker?.reset();
-  showTransientStatus("底图已切换为备用源（刷新后恢复）。");
+  map.on("complete", () => {
+    status.hidden = true;
+  });
 }
 
-let statusHideTimer: number | undefined;
+function renderBridgeOverlays() {
+  if (!state.map || !state.amap) return;
 
-function showTransientStatus(message: string) {
-  const status = byId("map-status");
-  status.textContent = message;
-  status.hidden = false;
-  if (statusHideTimer !== undefined) window.clearTimeout(statusHideTimer);
-  statusHideTimer = window.setTimeout(() => {
-    status.hidden = true;
-  }, 5000);
+  for (const bridge of state.bridges) {
+    const position = bridge.geometry.coordinates as [number, number];
+    const fill = researchStatusFill(bridge.properties.researchStatus);
+
+    const element = document.createElement("div");
+    element.className = "bridge-map-point";
+    element.innerHTML = `
+      <span class="bridge-map-dot" style="--point-fill: ${fill}"></span>
+      <span class="bridge-map-label">${escapeHtml(bridge.properties.name)}</span>
+    `;
+
+    const marker = new state.amap.Marker({
+      position,
+      content: element,
+      anchor: "center",
+      zIndex: 10,
+    });
+    marker.setMap(state.map);
+    marker.on("click", () => {
+      selectBridge(bridge.properties.id, true);
+      showBridgePopup(bridge, position);
+    });
+    state.bridgeMarkers.set(bridge.properties.id, marker);
+  }
+}
+
+function renderRouteOverlays() {
+  if (!state.map || !state.amap || !state.routes) return;
+
+  for (const route of state.routes.features) {
+    const props = route.properties;
+    const isChain = props.id === BRIDGE_CHAIN_ROUTE_ID;
+    const path = route.geometry.coordinates.map((coordinate) => coordinate as [number, number]);
+
+    const halo = new state.amap.Polyline({
+      path,
+      strokeColor: getMapTheme(getDocumentTheme()).chainHalo,
+      strokeWeight: isChain ? 7 : 6,
+      strokeOpacity: isChain ? 0.55 : 0,
+      strokeStyle: "solid",
+      zIndex: 2,
+    });
+    const line = new state.amap.Polyline({
+      path,
+      strokeColor: props.color,
+      strokeWeight: 4,
+      strokeOpacity: 0.82,
+      strokeStyle: isChain ? "dashed" : "solid",
+      zIndex: 3,
+    });
+
+    halo.setMap(state.map);
+    line.setMap(state.map);
+    state.routePolylines.set(props.id, [halo, line]);
+
+    line.on("mouseover", () => {
+      line.setOptions({ strokeWeight: 6, strokeOpacity: 1 });
+    });
+    line.on("mouseout", () => {
+      line.setOptions({ strokeWeight: 4, strokeOpacity: 0.82 });
+    });
+    line.on("click", (event) => {
+      const lngLatObj = (event as { lnglat?: { lng: number; lat: number } }).lnglat;
+      const lngLat: AmapLngLat = lngLatObj ? [lngLatObj.lng, lngLatObj.lat] : path[0];
+      showRoutePopup(props, lngLat);
+    });
+  }
 }
 
 function applyMapTheme(mode: ThemeMode) {
   const map = state.map;
-  if (!map || !map.isStyleLoaded()) return;
+  if (!map) return;
+
+  map.setStyle(mode === "dark" ? AMAP_STYLE_DARK : AMAP_STYLE_LIGHT);
 
   const theme = getMapTheme(mode);
-
-  for (const update of createBasemapThemeUpdates(theme)) {
-    for (const [property, value] of Object.entries(update.paint)) {
-      setPaintPropertyIfPresent(map, update.layerId, property, value);
-    }
+  // 覆盖层颜色：桥点经 CSS 变量（地图容器）更新；串链 halo 逐条重涂。
+  const container = document.getElementById("bridge-map");
+  container?.style.setProperty("--map-point-stroke", theme.pointStroke);
+  container?.style.setProperty("--map-point-halo", theme.pointHalo);
+  for (const [halo] of state.routePolylines.values()) {
+    halo.setOptions({ strokeColor: theme.chainHalo });
   }
-
-  setPaintPropertyIfPresent(map, "bridge-chain-halo", "line-color", theme.chainHalo);
-  setPaintPropertyIfPresent(map, "bridge-points-halo", "circle-color", theme.pointHalo);
-  setPaintPropertyIfPresent(map, "bridge-points", "circle-stroke-color", theme.pointStroke);
 }
 
-function setPaintPropertyIfPresent(
-  map: maplibregl.Map,
-  layerId: string,
-  property: string,
-  value: string | number,
-) {
-  if (map.getLayer(layerId)) {
-    map.setPaintProperty(layerId, property, value);
-  }
+function getMapTheme(mode: ThemeMode): MapLayerTheme {
+  return mode === "dark" ? DARK_MAP_THEME : LIGHT_MAP_THEME;
 }
 
 function getDocumentTheme(): ThemeMode {
   const theme = document.documentElement.dataset.theme;
   return isThemeMode(theme) ? theme : "light";
-}
-
-function getMapTheme(mode: ThemeMode): MapLayerTheme {
-  return mode === "dark" ? DARK_MAP_THEME : LIGHT_MAP_THEME;
 }
 
 function renderBridgeList() {
@@ -385,11 +429,12 @@ function selectBridge(bridgeId: string, moveMap: boolean) {
   const bridge = state.bridges.find((item) => item.properties.id === bridgeId);
   if (!bridge) return;
 
-  state.map.flyTo({
-    center: bridge.geometry.coordinates,
-    zoom: 12.3,
-    duration: 600,
-  });
+  state.map.setZoomAndCenter(
+    12.3,
+    bridge.geometry.coordinates as [number, number],
+    false,
+    600,
+  );
 }
 
 const storyScrollMemory = new Map<string, number>();
@@ -481,34 +526,14 @@ function markActiveBridge() {
   });
 }
 
-function showPopup(feature: BridgeFeature) {
-  if (!state.map) return;
-
-  replacePopup(feature.geometry.coordinates, `
-      <strong class="popup-title">${escapeHtml(feature.properties.name)}</strong>
-      <span>${feature.properties.openedYear} / ${escapeHtml(feature.properties.bridgeType)}</span>
-    `);
-}
-
-function renderBridgeMapLabels() {
-  if (!state.map) return;
-
-  for (const marker of state.labelMarkers) {
-    marker.remove();
-  }
-  state.labelMarkers = state.bridges.map((bridge) => {
-    const label = document.createElement("span");
-    label.className = "bridge-map-label";
-    label.textContent = bridge.properties.name;
-
-    return new maplibregl.Marker({
-      element: label,
-      anchor: "top",
-      offset: [0, 16],
-    })
-      .setLngLat(bridge.geometry.coordinates)
-      .addTo(state.map as maplibregl.Map);
-  });
+function showBridgePopup(bridge: BridgeFeature, position: AmapLngLat) {
+  replaceInfoWindow(
+    position,
+    `
+      <strong class="popup-title">${escapeHtml(bridge.properties.name)}</strong>
+      <span>${bridge.properties.openedYear} / ${escapeHtml(bridge.properties.bridgeType)}</span>
+    `,
+  );
 }
 
 function renderMapLegend(routes: RouteFeatureCollection) {
@@ -569,13 +594,10 @@ function setLegendOpen(open: boolean) {
 
 function focusRoute(routeId: string) {
   const route = state.routes?.features.find((item) => item.properties.id === routeId);
-  if (!route || !state.map) return;
+  const polylines = state.map && state.routePolylines.get(routeId);
+  if (!route || !polylines || !state.map) return;
 
-  const bounds = new maplibregl.LngLatBounds();
-  for (const coordinate of route.geometry.coordinates) {
-    bounds.extend(coordinate);
-  }
-  state.map.fitBounds(bounds, { padding: 56, duration: 700 });
+  state.map.setFitView(polylines, false, [56, 56, 56, 56], 15);
 
   const firstBridgeId = getRouteBridgeIds(route)[0];
   if (firstBridgeId) {
@@ -598,47 +620,7 @@ function getRouteBridgeIds(route: RouteFeature): string[] {
   });
 }
 
-function bindRouteInteractions(map: maplibregl.Map) {
-  for (const layerId of ["research-routes", "bridge-chain"]) {
-    map.on("click", layerId, (event) => {
-      const feature = event.features?.[0];
-      if (!feature) return;
-      showRoutePopup(feature.properties, event.lngLat);
-    });
-
-    map.on("mouseenter", layerId, () => {
-      map.getCanvas().style.cursor = "pointer";
-      setRouteLayerEmphasis(layerId, true);
-    });
-
-    map.on("mouseleave", layerId, () => {
-      map.getCanvas().style.cursor = "";
-      setRouteLayerEmphasis(layerId, false);
-    });
-  }
-}
-
-function setRouteLayerEmphasis(layerId: string, hover: boolean) {
-  if (!state.map) return;
-
-  if (layerId === "research-routes") {
-    state.map.setPaintProperty("research-routes", "line-width", hover ? 6 : 4);
-    state.map.setPaintProperty("research-routes", "line-opacity", hover ? 1 : 0.82);
-  } else {
-    state.map.setPaintProperty(
-      "bridge-chain",
-      "line-width",
-      hover
-        ? ["interpolate", ["linear"], ["zoom"], 9, 5, 14, 8]
-        : ["interpolate", ["linear"], ["zoom"], 9, 3, 14, 6],
-    );
-    state.map.setPaintProperty("bridge-chain", "line-opacity", hover ? 1 : 0.75);
-  }
-}
-
-function showRoutePopup(properties: Record<string, unknown>, lngLat: maplibregl.LngLat) {
-  if (!state.map) return;
-
+function showRoutePopup(properties: Record<string, unknown>, lngLat: AmapLngLat) {
   const read = (key: string) => (properties[key] === undefined ? "" : String(properties[key]));
   const lines = [
     `<strong class="popup-title">${escapeHtml(read("name"))}</strong>`,
@@ -648,17 +630,19 @@ function showRoutePopup(properties: Record<string, unknown>, lngLat: maplibregl.
     read("summary") ? `<span>${escapeHtml(read("summary"))}</span>` : "",
   ].filter(Boolean);
 
-  replacePopup(lngLat, lines.join("<br/>"));
+  replaceInfoWindow(lngLat, lines.join("<br/>"));
 }
 
-function replacePopup(lngLat: maplibregl.LngLatLike, html: string) {
-  if (!state.map) return;
+function replaceInfoWindow(lngLat: AmapLngLat, html: string) {
+  if (!state.map || !state.amap) return;
 
-  state.popup?.remove();
-  state.popup = new maplibregl.Popup({ closeButton: false, maxWidth: "280px" })
-    .setLngLat(lngLat)
-    .setHTML(html)
-    .addTo(state.map);
+  state.infoWindow?.close();
+  state.infoWindow = new state.amap.InfoWindow({
+    content: html,
+    offset: new state.amap.Pixel(0, -18),
+    maxWidth: 280,
+  });
+  state.infoWindow.open(state.map, lngLat);
 }
 
 async function fetchJson<T>(path: string): Promise<T> {

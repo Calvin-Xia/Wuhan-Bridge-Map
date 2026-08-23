@@ -1,24 +1,21 @@
 import { describe, expect, it } from "vitest";
-import * as mapLayerSpec from "./map-layer-spec";
+import {
+  DARK_MAP_THEME,
+  LIGHT_MAP_THEME,
+  RESEARCH_STATUS_FILLS,
+  researchStatusFill,
+} from "./map-layer-spec";
 
-describe("theme-aware bridge map layers", () => {
-  it("exposes a factory for light and dark map layer palettes", () => {
-    expect(typeof mapLayerSpec.createBridgeMapLayers).toBe("function");
-    expect(mapLayerSpec.LIGHT_MAP_THEME).toBeDefined();
-    expect(mapLayerSpec.DARK_MAP_THEME).toBeDefined();
+describe("覆盖层明暗调色板", () => {
+  it("暗色主题用亮色 halo/描边，亮色主题用深色描边", () => {
+    expect(LIGHT_MAP_THEME.pointStroke).toBe("#0f1a17");
+    expect(DARK_MAP_THEME.pointStroke).toBe("#edf4ef");
+    expect(LIGHT_MAP_THEME.chainHalo).not.toBe(DARK_MAP_THEME.chainHalo);
   });
 
-  it("uses brighter halos and strokes for the dark map", () => {
-    if (typeof mapLayerSpec.createBridgeMapLayers !== "function") return;
-
-    const lightLayers = mapLayerSpec.createBridgeMapLayers(mapLayerSpec.LIGHT_MAP_THEME);
-    const darkLayers = mapLayerSpec.createBridgeMapLayers(mapLayerSpec.DARK_MAP_THEME);
-    const lightPointLayer = lightLayers.find((layer) => layer.id === "bridge-points");
-    const darkPointLayer = darkLayers.find((layer) => layer.id === "bridge-points");
-    const lightPaint = lightPointLayer && "paint" in lightPointLayer ? lightPointLayer.paint : null;
-    const darkPaint = darkPointLayer && "paint" in darkPointLayer ? darkPointLayer.paint : null;
-
-    expect(lightPaint).toMatchObject({ "circle-stroke-color": "#0f1a17" });
-    expect(darkPaint).toMatchObject({ "circle-stroke-color": "#edf4ef" });
+  it("三态调研状态 + 兜底色", () => {
+    expect(researchStatusFill("已实地调研")).toBe(RESEARCH_STATUS_FILLS["已实地调研"]);
+    expect(researchStatusFill("待实地核验")).toBe(RESEARCH_STATUS_FILLS["待实地核验"]);
+    expect(researchStatusFill("未知状态")).toBe(RESEARCH_STATUS_FILLS.fallback);
   });
 });

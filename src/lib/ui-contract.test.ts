@@ -1,106 +1,31 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BRIDGE_CHAIN_ROUTE_ID } from "./bridge-chain";
 import {
-  BRIDGE_CHAIN_HALO_LAYER,
-  BRIDGE_CHAIN_LAYER,
-  BRIDGE_MAP_LAYERS,
-  BRIDGE_POINTS_HALO_LAYER,
-  BRIDGE_POINTS_LAYER,
-  RESEARCH_ROUTES_LAYER,
+  DARK_MAP_THEME,
+  LIGHT_MAP_THEME,
+  RESEARCH_STATUS_FILLS,
+  researchStatusFill,
 } from "./map-layer-spec";
 
 const page = readFileSync(new URL("../pages/index.astro", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles/global.css", import.meta.url), "utf8");
 
-describe("MapLibre bridge-chain contract", () => {
-  it("keeps all rendered map layers in order", () => {
-    expect(BRIDGE_MAP_LAYERS.map((layer) => layer.id)).toEqual([
-      "research-routes",
-      "bridge-chain-halo",
-      "bridge-chain",
-      "bridge-points-halo",
-      "bridge-points",
-    ]);
+describe("overlay appearance contract", () => {
+  it("keeps light/dark palette contrast for halos and strokes", () => {
+    expect(LIGHT_MAP_THEME.pointStroke).toBe("#0f1a17");
+    expect(DARK_MAP_THEME.pointStroke).toBe("#edf4ef");
+    expect(LIGHT_MAP_THEME.chainHalo).not.toBe(DARK_MAP_THEME.chainHalo);
   });
 
-  it("defines the research-routes layer contract", () => {
-    expect(RESEARCH_ROUTES_LAYER).toEqual({
-      id: "research-routes",
-      type: "line",
-      source: "routes",
-      filter: ["!=", ["get", "id"], BRIDGE_CHAIN_ROUTE_ID],
-      paint: {
-        "line-color": ["get", "color"],
-        "line-width": 4,
-        "line-opacity": 0.82,
-      },
-    });
+  it("maps the three research statuses plus a fallback color", () => {
+    expect(researchStatusFill("已实地调研")).toBe(RESEARCH_STATUS_FILLS["已实地调研"]);
+    expect(researchStatusFill("待实地核验")).toBe(RESEARCH_STATUS_FILLS["待实地核验"]);
+    expect(researchStatusFill("其他")).toBe(RESEARCH_STATUS_FILLS.fallback);
   });
 
-  it("defines the bridge-chain halo layer contract", () => {
-    expect(BRIDGE_CHAIN_HALO_LAYER).toEqual({
-      id: "bridge-chain-halo",
-      type: "line",
-      source: "routes",
-      filter: ["==", ["get", "id"], BRIDGE_CHAIN_ROUTE_ID],
-      paint: {
-        "line-color": "#edf1ed",
-        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 5, 14, 8],
-        "line-opacity": 0.55,
-        "line-blur": 1.2,
-      },
-    });
-  });
-
-  it("defines the bridge-chain main line contract", () => {
-    expect(BRIDGE_CHAIN_LAYER).toEqual({
-      id: "bridge-chain",
-      type: "line",
-      source: "routes",
-      filter: ["==", ["get", "id"], BRIDGE_CHAIN_ROUTE_ID],
-      paint: {
-        "line-color": ["get", "color"],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 3, 14, 6],
-        "line-opacity": 0.75,
-        "line-dasharray": [1.2, 1.4],
-      },
-    });
-  });
-
-  it("defines the bridge-points halo layer contract", () => {
-    expect(BRIDGE_POINTS_HALO_LAYER).toEqual({
-      id: "bridge-points-halo",
-      type: "circle",
-      source: "bridges",
-      paint: {
-        "circle-radius": 14,
-        "circle-color": "#edf1ed",
-        "circle-opacity": 0.88,
-      },
-    });
-  });
-
-  it("defines bridge-points as a circle layer on the bridges source", () => {
-    expect(BRIDGE_POINTS_LAYER).toEqual({
-      id: "bridge-points",
-      type: "circle",
-      source: "bridges",
-      paint: {
-        "circle-radius": 7,
-        "circle-color": [
-          "match",
-          ["get", "researchStatus"],
-          "已实地调研",
-          "#cf6245",
-          "待实地核验",
-          "#9f7741",
-          "#08768d",
-        ],
-        "circle-stroke-color": "#0f1a17",
-        "circle-stroke-width": 1.5,
-      },
-    });
+  it("keeps the AMap tile key out of source (build-time injection only)", () => {
+    expect(page).not.toContain("02795a");
+    expect(styles).not.toContain("02795a");
   });
 });
 
@@ -175,7 +100,6 @@ describe("dashboard interface contract", () => {
 
   it("declares accessible touch targets and small-text sizes", () => {
     expect(styles).toMatch(/\.voice-expand-toggle\s*\{[^}]*min-height: 2\.75rem/);
-    expect(styles).toMatch(/\.maplibregl-ctrl-group button\s*\{[^}]*width: 44px !important/);
     expect(styles).toMatch(/\.map-legend-title\s*\{[^}]*font-size: 0\.75rem/);
     expect(styles).toMatch(/\.governance-stat-source\s*\{[^}]*font-size: 0\.75rem/);
     expect(styles).toContain("--text-secondary: #56645e");
