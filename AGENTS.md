@@ -15,12 +15,12 @@ npm run build        # validate:data && astro check && astro build（产出 dist
 
 ## 技术栈
 
-Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` 插件，无需配置文件）· MapLibre GL JS 5（OSM 栅格底图，明暗双主题）· Apache ECharts 6（按需引入，canvas 渲染）· Vitest。
+Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` 插件，无需配置文件）· MapLibre GL JS 5（天地图 WMTS 卫星栅格底图 `img_w`+`cva_w`，OSM 备用源，明暗双主题）· Apache ECharts 6（按需引入，canvas 渲染）· Vitest。
 
 ## 目录与约定
 
 - `public/data/`：唯一数据源（bridges.geojson 8 座桥 / routes.geojson 4 条路线 / stories.json 8 张故事卡（7 桥含 institutionNote）/ survey-summary.json 7 组问卷指标 / sources.json / voices.json 市民之声 / governance.json 治理侧记）
-- `src/lib/`：纯函数与类型（data-validation.ts 校验、bridge-chain.ts 链线校验、chart-options.ts 图表工厂、map-layer-spec.ts 图层契约），同名 `.test.ts` 为契约测试
+- `src/lib/`：纯函数与类型（data-validation.ts 校验、bridge-chain.ts 链线校验、chart-options.ts 图表工厂、map-layer-spec.ts 图层契约、map-basemap.ts 底图瓦片工厂），同名 `.test.ts` 为契约测试
 - `src/scripts/`：客户端入口（map-app.ts 地图、charts.ts 图表、voices.ts 引语、governance.ts 治理侧记、theme.ts、reveal.ts）
 - `src/pages/index.astro` 单页（结尾 tail-grid：桌面双列"问卷里的市民之声 | 治理侧记"，移动单列，两侧均默认收起部分内容且双向展开/收起）；`src/styles/global.css` 全局样式（明暗主题 token）
 - `data/`（根目录，已 git 跟踪）：原始调研材料（工作总结、问卷分析），只读素材
@@ -48,9 +48,11 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 
 ## 当前状态与下一步
 
-- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 80 项全过
+- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 97 项全过
+- 底图已切换为天地图（WMTS 球面墨卡托，影像 `img_w`+注记 `cva_w` 双 raster 图层，明暗双主题；tk 为前端公开常量 `7b42…`，见 `src/lib/map-basemap.ts`）；连续 ≥3 次瓦片级错误自动切 OSM 备用源并短暂提示，刷新后重试天地图（`TileErrorTracker`，`map-app.ts` 的 `switchToOsmFallback`）
+- 天地图两个已知坑（实测 2026-08）：① `vec_w` 矢量层仅 z10 及以下出真内容，z12+ 返回"200 + 灰白占位图"（103 字节 PNG），故底图用影像+注记；② 白名单不匹配返回 403 `code 301007`（可被兜底捕获），"图层未授权/占位"则是 200 + 纯色占位图（**无错误事件，兜底无法感知**，只能靠控制台配置正确：域名白名单须包含正式域名；当前白名单已清空=无限制，tk 暴露风险接受并有 OSM 兜底）
 - 深链与导航：`#bridge-<id>` 选桥（加载定位 + replaceState 写回）、页头 4 个章节锚点（平滑滚动，尊重 reduced-motion）；"类证据 5"指标卡已加形态说明
 - 故事卡交互：切桥快速平滑回顶（`prefers-reduced-motion` 时瞬时），每桥进度会话内记忆（桌面面板级 / 移动页面级，`src/lib/story-scroll.ts`）；同桥点击不滚动
 - 尾部双列：市民之声每列默认收起至前 3 条/治理侧记默认展示 2 组数据卡 + 2 条引语，均为双向展开/收起（按钮带 `aria-expanded`），口径说明常显
-- `dist/` 已随 2026-08-23 的 `npm run build` 更新
+- `dist/` 已随天地图底图替换后的最近一次 `npm run build` 更新
 - 待定项：图层开关（曾评估暂缓）、真实步行轨迹（P2 未做）

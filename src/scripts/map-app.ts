@@ -1,6 +1,6 @@
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { LngLatBoundsLike, StyleSpecification } from "maplibre-gl";
+import type { LngLatBoundsLike } from "maplibre-gl";
 import type {
   BridgeFeature,
   BridgeFeatureCollection,
@@ -9,6 +9,20 @@ import type {
   SourceRecord,
   StoryRecord,
 } from "../lib/data-validation";
+import {
+  BASEMAP_LAYERS,
+  BASEMAP_SOURCES,
+  DARK_TIANDITU_THEME,
+  LIGHT_TIANDITU_THEME,
+  TileErrorTracker,
+  createBasemapThemeUpdates,
+  createOsmFallbackLayer,
+  createOsmFallbackSource,
+  createTiandituStyle,
+  isTileError,
+  type MapTileErrorShape,
+  type TiandituBasemapTheme,
+} from "../lib/map-basemap";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { buildBridgeHash, parseBridgeHash } from "../lib/bridge-hash";
@@ -33,8 +47,7 @@ const STUDY_AREA_BOUNDS: LngLatBoundsLike = [
   [114.15, 30.4],
   [114.525, 30.725],
 ];
-const OSM_ATTRIBUTION =
-  '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">&copy; OpenStreetMap contributors</a>';
+type BasemapProvider = "tianditu" | "osm";
 const state = {
   activeBridgeId: "",
   bridges: [] as BridgeFeature[],
@@ -44,6 +57,8 @@ const state = {
   labelMarkers: [] as maplibregl.Marker[],
   map: null as maplibregl.Map | null,
   popup: null as maplibregl.Popup | null,
+  basemapProvider: "tianditu" as BasemapProvider,
+  tileErrorTracker: null as TileErrorTracker | null,
 };
 
 window.addEventListener(THEME_CHANGE_EVENT, (event) => {
@@ -94,10 +109,11 @@ async function initMapApp() {
 
 function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollection) {
   const status = byId("map-status");
-  const theme = getMapTheme(getDocumentTheme());
+  const themeMode = getDocumentTheme();
+  const theme = getMapTheme(themeMode);
   const map = new maplibregl.Map({
     container: "bridge-map",
-    style: createOsmRasterStyle(theme),
+    style: createTiandituStyle(theme, getTiandituTheme(themeMode)),
     center: INITIAL_MAP_VIEW.center,
     zoom: INITIAL_MAP_VIEW.zoom,
     minZoom: 9.1,
@@ -107,6 +123,7 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
   });
 
   state.map = map;
+  state.tileErrorTracker = new TileErrorTracker();
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true }), "top-right");
   map.addControl(new maplibregl.AttributionControl({ compact: false }), "bottom-right");
@@ -164,51 +181,59 @@ function createMap(bridges: BridgeFeatureCollection, routes: RouteFeatureCollect
   });
 
   map.on("error", (event) => {
-    const error = event.error as { url?: string; tile?: unknown } | undefined;
-    // 瓦片级错误（OSM 偶发失败、限流、单瓦片 404）可自动重试，不打扰用户。
-    if (error?.url || error?.tile) return;
+    const error = event.error as MapTileErrorShape | undefined;
+    // 瓦片级错误（限流/403/网络失败）：静默重试；天地图连续达到阈值时自动切 OSM 备用源。
+    if (isTileError(error)) {
+      if (
+        state.basemapProvider === "tianditu" &&
+        state.tileErrorTracker?.record(performance.now(), error)
+      ) {
+        switchToOsmFallback();
+      }
+      return;
+    }
 
     status.hidden = false;
     status.textContent = "底图暂时不可用，桥梁列表和故事卡片仍可使用。";
   });
 }
 
-function createOsmRasterStyle(theme: MapLayerTheme): StyleSpecification {
-  return {
-    version: 8,
-    name: "Wuhan bridge study area OSM raster",
-    sources: {
-      "osm-raster": {
-        type: "raster",
-        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-        tileSize: 256,
-        minzoom: 0,
-        maxzoom: 19,
-        attribution: OSM_ATTRIBUTION,
-      },
-    },
-    layers: [
-      {
-        id: "map-background",
-        type: "background",
-        paint: {
-          "background-color": theme.background,
-        },
-      },
-      {
-        id: "osm-raster",
-        type: "raster",
-        source: "osm-raster",
-        paint: {
-          "raster-opacity": theme.rasterOpacity,
-          "raster-saturation": theme.rasterSaturation,
-          "raster-contrast": theme.rasterContrast,
-          "raster-brightness-min": theme.rasterBrightnessMin,
-          "raster-brightness-max": theme.rasterBrightnessMax,
-        },
-      },
-    ],
-  };
+function switchToOsmFallback() {
+  const map = state.map;
+  if (!map || !map.isStyleLoaded() || state.basemapProvider === "osm") return;
+
+  for (const layerId of [BASEMAP_LAYERS.tiandituBase, BASEMAP_LAYERS.tiandituAnnotation]) {
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+  }
+  for (const sourceId of [BASEMAP_SOURCES.tiandituBase, BASEMAP_SOURCES.tiandituAnnotation]) {
+    if (map.getSource(sourceId)) map.removeSource(sourceId);
+  }
+
+  map.addSource(BASEMAP_SOURCES.osmFallback, createOsmFallbackSource());
+  const theme = getMapTheme(getDocumentTheme());
+  const layer = createOsmFallbackLayer(theme);
+  // 插到覆盖图层之前，避免盖住路线/桥点。
+  if (map.getLayer("research-routes")) {
+    map.addLayer(layer, "research-routes");
+  } else {
+    map.addLayer(layer);
+  }
+
+  state.basemapProvider = "osm";
+  state.tileErrorTracker?.reset();
+  showTransientStatus("底图已切换为备用源（刷新后恢复）。");
+}
+
+let statusHideTimer: number | undefined;
+
+function showTransientStatus(message: string) {
+  const status = byId("map-status");
+  status.textContent = message;
+  status.hidden = false;
+  if (statusHideTimer !== undefined) window.clearTimeout(statusHideTimer);
+  statusHideTimer = window.setTimeout(() => {
+    status.hidden = true;
+  }, 5000);
 }
 
 function applyMapTheme(mode: ThemeMode) {
@@ -216,12 +241,14 @@ function applyMapTheme(mode: ThemeMode) {
   if (!map || !map.isStyleLoaded()) return;
 
   const theme = getMapTheme(mode);
-  setPaintPropertyIfPresent(map, "map-background", "background-color", theme.background);
-  setPaintPropertyIfPresent(map, "osm-raster", "raster-opacity", theme.rasterOpacity);
-  setPaintPropertyIfPresent(map, "osm-raster", "raster-saturation", theme.rasterSaturation);
-  setPaintPropertyIfPresent(map, "osm-raster", "raster-contrast", theme.rasterContrast);
-  setPaintPropertyIfPresent(map, "osm-raster", "raster-brightness-min", theme.rasterBrightnessMin);
-  setPaintPropertyIfPresent(map, "osm-raster", "raster-brightness-max", theme.rasterBrightnessMax);
+  const tianditu = getTiandituTheme(mode);
+
+  for (const update of createBasemapThemeUpdates(theme, tianditu)) {
+    for (const [property, value] of Object.entries(update.paint)) {
+      setPaintPropertyIfPresent(map, update.layerId, property, value);
+    }
+  }
+
   setPaintPropertyIfPresent(map, "bridge-chain-halo", "line-color", theme.chainHalo);
   setPaintPropertyIfPresent(map, "bridge-points-halo", "circle-color", theme.pointHalo);
   setPaintPropertyIfPresent(map, "bridge-points", "circle-stroke-color", theme.pointStroke);
@@ -245,6 +272,10 @@ function getDocumentTheme(): ThemeMode {
 
 function getMapTheme(mode: ThemeMode): MapLayerTheme {
   return mode === "dark" ? DARK_MAP_THEME : LIGHT_MAP_THEME;
+}
+
+function getTiandituTheme(mode: ThemeMode): TiandituBasemapTheme {
+  return mode === "dark" ? DARK_TIANDITU_THEME : LIGHT_TIANDITU_THEME;
 }
 
 function renderBridgeList() {
