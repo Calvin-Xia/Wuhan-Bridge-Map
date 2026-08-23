@@ -222,6 +222,7 @@ function renderBridgeOverlays() {
 
     const element = document.createElement("div");
     element.className = "bridge-map-point";
+    // 锚点=圆点中心：content 只含 dot，label 绝对定位溢出在下方（不影响锚点计算）。
     element.innerHTML = `
       <span class="bridge-map-dot" style="--point-fill: ${fill}"></span>
       <span class="bridge-map-label">${escapeHtml(bridge.properties.name)}</span>

@@ -37,7 +37,8 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 - 路线属性含 `group`/`date`/`sampleCount`；串联线坐标必须逐一等于桥心（`bridge-chain.ts` 校验）
 - 问卷口径：网络版 228 份、现场版 57 份、开放题网络 72 条/现场 22 条；图表多选数据用横向条形，不写"公众普遍"类推断
 - 地图覆盖层 hover 用 `setOptions` 调线宽/透明度整条强调（AMap.Polyline）；**不使用 feature-state/promoteId**（曾导致maplibre 线条渲染异常，属历史约定）
-- **地图坐标口径**：`public/data` 的 GeoJSON 与 `src/lib/map-view.ts` 初始视野均已是 **GCJ-02**（官方 `AMap.convertFrom` 一次性转换，2026-08-23 固化；与 WGS-84 底图不兼容，换回 OSM/卫星需反向转换）。引擎 `isCorrection: false`——高德官方 FAQ 46660 确认"GCJ-02 坐标在不同缩放级别显示位置会变"，纠偏开启会造成缩放漂移，勿改回
+- **地图坐标口径**：`public/data` 的 GeoJSON 与 `src/lib/map-view.ts` 初始视野均已是 **GCJ-02 官方 POI 锚点**（2026-08-23 用 AMap.PlaceSearch/convertFrom 固化：8 桥点=官方桥 POI，路线=按桥序列重建；与 WGS-84 底图不兼容，换回 OSM/卫星需反向转换）。引擎 `isCorrection: false`——高德官方 FAQ 46660 确认"GCJ-02 坐标在不同缩放级别显示位置会变"，纠偏开启会造成缩放漂移，勿改回
+- **覆盖层锚点契约**：桥点 Marker 的 content 只含圆点（label 绝对定位溢出），anchor=center，保证圆点中心压在坐标上（实测 0.1px）；改动 content 布局需同步 js 测量（`lngLatToContainer`）
 
 ## CI/CD（GitHub Actions → Cloudflare Workers Assets）
 
@@ -52,7 +53,7 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 - 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 79 项全过
 - 底图已切换为 **高德 JS API v2 引擎**（官方底图，周更矢量管线 `jsapi.amap.com/web_map/get_tile` + `o4.amap.com/…pbf`，实测数据版本 26_07_27；key+安全密钥为前端公开常量，构建期可用 `PUBLIC_AMAP_KEY/PUBLIC_AMAP_SECURITY_CODE` 覆盖；明暗主题官方样式 normal/darkblue；覆盖层为 AMap Marker/Polyline，颜色见 `map-layer-spec.ts`）
 - 高德踩坑记录（实测 2026-08）：① 官方"底图瓦片"raster 端点（webrd/wprd style=7/8）数据滞后——style=7 缺 2019 杨泗港大桥（同瓦片 124B 纯水 vs style=8 5066B 带桥），style=8 地物较新但仍落后 web.amap.com，故弃用 raster 走引擎；② 引擎 isCorrection 开启=缩放级漂移（官方 FAQ 46660），数据已固化为 GCJ-02 + isCorrection:false，实测 z10→z14 像素比 15.998≈16（零漂移）；③ 桥点矢量 PBF 必须引擎渲染，MapLibre/Worker 代理不可行；④ Web 服务 API 与 JS API key 不互通（`USERKEY_PLAT_NOMATCH`），restapi 需另建 Web 服务 key
-- 个别桥点位（如长江大桥）为低缩放级别人工拾取，与真实桥心有几十~几百米固定偏差（不随缩放变化）；可用官方 POI 坐标重写（待定项）
+- 桥点坐标已按官方 POI 锚点重写（2026-08-23）：点在底图/桥线上像素级对齐（dot↔POI 0.1px、点↔线 0.1px）；POI 锚点为官方桥 POI 位置，非"桥几何中心"，如需中心可再细调
 - 深链与导航：`#bridge-<id>` 选桥（加载定位 + replaceState 写回）、页头 4 个章节锚点（平滑滚动，尊重 reduced-motion）；"类证据 5"指标卡已加形态说明
 - 故事卡交互：切桥快速平滑回顶（`prefers-reduced-motion` 时瞬时），每桥进度会话内记忆（桌面面板级 / 移动页面级，`src/lib/story-scroll.ts`）；同桥点击不滚动
 - 尾部双列：市民之声每列默认收起至前 3 条/治理侧记默认展示 2 组数据卡 + 2 条引语，均为双向展开/收起（按钮带 `aria-expanded`），口径说明常显
