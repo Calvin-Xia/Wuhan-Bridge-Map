@@ -427,6 +427,8 @@ button:focus-visible {
   min-height: 0;
   padding-block: 1rem 0.5rem;
   overflow: auto;
+  /* 有界面板（桌面 grid 界内 / 移动端 max-height）滚到底不再传染整页滚动。 */
+  overscroll-behavior-y: contain;
   border-block-start: 3px solid var(--accent);
 }
 
@@ -451,6 +453,11 @@ button:focus-visible {
 
 .story-panel strong {
   color: var(--text);
+}
+
+/* 「展开全文」仅移动端（≤980px）存在；桌面端面板始终完整展示。 */
+.story-panel-toggle {
+  display: none;
 }
 
 .tag-row,
@@ -1312,6 +1319,68 @@ button:focus-visible {
     max-height: 22rem;
   }
 
+  /* 一桥一问故事卡：双态都限界。折叠态只显示核心 + 证据（安全网 28rem），
+     展开态全量内容进入有界内滚（min(60vh, 36rem)，动态视口单位 dvh 覆盖），
+     页面流长度恒定。 */
+  .story-panel {
+    max-height: 28rem;
+  }
+
+  .story-panel.is-expanded {
+    max-height: min(60vh, 36rem);
+    max-height: min(60dvh, 36rem);
+  }
+
+  .story-panel .story-collapsible {
+    display: none;
+  }
+
+  .story-panel.is-expanded .story-collapsible {
+    display: block;
+    animation: story-fade-in 180ms ease-out;
+  }
+
+  .story-panel-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    margin-block-start: 0.85rem;
+    padding-inline: 0.9rem;
+    color: var(--accent-hover);
+    font-weight: 700;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: transparent;
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease;
+  }
+
+  .story-panel-toggle:hover {
+    color: var(--text-strong);
+    background: var(--surface-hover);
+  }
+
+  .story-panel-toggle:active {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  /* 方向暗示：复刻移动端图例 chevron 语言（CSS 边框绘制）。 */
+  .story-panel-chevron {
+    flex: 0 0 auto;
+    width: 0.62rem;
+    height: 0.62rem;
+    margin-inline-start: 0.45rem;
+    border-inline-end: 1.6px solid var(--text-tertiary);
+    border-block-end: 1.6px solid var(--text-tertiary);
+    transform: rotate(45deg);
+    transition: transform 180ms ease;
+  }
+
+  .story-panel.is-expanded .story-panel-chevron {
+    transform: rotate(225deg);
+  }
+
   .chart-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -1322,6 +1391,16 @@ button:focus-visible {
     padding-inline-start: 0;
     border-block-start: 1px solid var(--border);
     border-inline-start: 0;
+  }
+}
+
+@keyframes story-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

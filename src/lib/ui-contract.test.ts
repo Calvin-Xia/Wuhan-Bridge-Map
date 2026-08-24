@@ -81,6 +81,28 @@ describe("dashboard interface contract", () => {
     expect(styles).toContain("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)");
   });
 
+  it("declares the desktop-only full story panel and touch-target toggle", () => {
+    expect(styles).toMatch(/\.story-panel-toggle\s*\{[^}]*display: none/);
+  });
+
+  it("declares the mobile story panel dual-state bounds", () => {
+    expect(styles).toContain(".story-panel-toggle");
+    expect(styles).toContain("max-height: 28rem");
+    expect(styles).toContain("max-height: min(60dvh, 36rem)");
+    expect(styles).toMatch(/\.story-panel \.story-collapsible\s*\{[^}]*display: none/);
+    expect(styles).toMatch(/\.story-panel-toggle\s*\{[^}]*min-height: 2\.75rem/);
+  });
+
+  it("keeps the story toggle interaction polish in line with the app language", () => {
+    expect(styles).toMatch(/\.story-panel-toggle:active\s*\{[^}]*translateY\(1px\) scale\(0\.99\)/);
+    expect(styles).toContain(".story-panel-chevron");
+    expect(styles).toMatch(/\.story-panel-chevron\s*\{[^}]*border-inline-end: 1\.6px/);
+    expect(styles).toMatch(/\.story-panel\.is-expanded \.story-panel-chevron\s*\{[^}]*rotate\(225deg\)/);
+    expect(styles).toContain("story-fade-in");
+    expect(styles).toMatch(/@keyframes story-fade-in\s*\{[^}]*opacity: 0/);
+    expect(styles).toMatch(/\.story-panel\s*\{[^}]*overscroll-behavior-y: contain/);
+  });
+
   it("declares the governance band with its stat groups, quotes and disclaimers", () => {
     expect(page).toContain('aria-label="治理侧记"');
     expect(page).toContain('id="section-governance"');

@@ -20,7 +20,7 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 ## 目录与约定
 
 - `public/data/`：唯一数据源（bridges.geojson 8 座桥 / routes.geojson 4 条路线 / stories.json 8 张故事卡（7 桥含 institutionNote）/ survey-summary.json 7 组问卷指标 / sources.json / voices.json 市民之声 / governance.json 治理侧记）
-- `src/lib/`：纯函数与类型（data-validation.ts 校验、bridge-chain.ts 链线校验、chart-options.ts 图表工厂、map-layer-spec.ts 覆盖层调色板契约），同名 `.test.ts` 为契约测试
+- `src/lib/`：纯函数与类型（data-validation.ts 校验、bridge-chain.ts 链线校验、chart-options.ts 图表工厂、map-layer-spec.ts 覆盖层调色板契约、story-toggle.ts 展开态纯映射），同名 `.test.ts` 为契约测试
 - `src/scripts/`：客户端入口（map-app.ts 地图、charts.ts 图表、voices.ts 引语、governance.ts 治理侧记、theme.ts、reveal.ts）
 - `src/pages/index.astro` 单页（结尾 tail-grid：桌面双列"问卷里的市民之声 | 治理侧记"，移动单列，两侧均默认收起部分内容且双向展开/收起）；`src/styles/global.css` 全局样式（明暗主题 token）
 - `data/`（根目录，已 git 跟踪）：原始调研材料（工作总结、问卷分析），只读素材
@@ -51,12 +51,13 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 
 ## 当前状态与下一步
 
-- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 79 项全过
+- 数据整合完成（8 桥、7 图、市民之声、路线图例/组命名/hover 强调）；治理侧记 + 7 桥"治理与管养"已上线（路桥中心访谈与 2025 年工作总结，口径并存标注）；测试 88 项全过
 - 底图已切换为 **高德 JS API v2 引擎**（官方底图，周更矢量管线 `jsapi.amap.com/web_map/get_tile` + `o4.amap.com/…pbf`，实测数据版本 26_07_27；key+安全密钥为前端公开常量，构建期可用 `PUBLIC_AMAP_KEY/PUBLIC_AMAP_SECURITY_CODE` 覆盖；明暗主题官方样式 normal/darkblue；覆盖层为 AMap Marker/Polyline，颜色见 `map-layer-spec.ts`）
 - 高德踩坑记录（实测 2026-08）：① 官方"底图瓦片"raster 端点（webrd/wprd style=7/8）数据滞后——style=7 缺 2019 杨泗港大桥（同瓦片 124B 纯水 vs style=8 5066B 带桥），style=8 地物较新但仍落后 web.amap.com，故弃用 raster 走引擎；② 引擎 isCorrection 开启=缩放级漂移（官方 FAQ 46660），数据已固化为 GCJ-02 + isCorrection:false，实测 z10→z14 像素比 15.998≈16（零漂移）；③ 桥点矢量 PBF 必须引擎渲染，MapLibre/Worker 代理不可行；④ Web 服务 API 与 JS API key 不互通（`USERKEY_PLAT_NOMATCH`），restapi 需另建 Web 服务 key
 - 桥点坐标已按官方 POI 锚点重写（2026-08-23）：点在底图/桥线上像素级对齐（dot↔POI 0.1px、点↔线 0.1px）；POI 锚点为官方桥 POI 位置，非"桥几何中心"，如需中心可再细调
 - 深链与导航：`#bridge-<id>` 选桥（加载定位 + replaceState 写回）、页头 4 个章节锚点（平滑滚动，尊重 reduced-motion）；"类证据 5"指标卡已加形态说明
-- 故事卡交互：切桥快速平滑回顶（`prefers-reduced-motion` 时瞬时），每桥进度会话内记忆（桌面面板级 / 移动页面级，`src/lib/story-scroll.ts`）；同桥点击不滚动
+- 故事卡交互：切桥快速平滑回顶（`prefers-reduced-motion` 时瞬时），每桥进度会话内记忆（面板级，折叠/展开态均有效，`src/lib/story-scroll.ts`）；同桥点击不滚动
+- **移动端故事卡双态限界**：≤980px 一桥一问面板默认折叠（仅核心+证据，max-height 28rem 安全网），「展开全文」后全量进入 `min(60dvh, 36rem)`（含 60vh 回退）有界内滚，页面流高度恒定；展开态逐桥会话内记忆、新桥默认折叠；桌面 ≥981px 完整展示、按钮经 CSS 隐藏，逻辑零改动；story-scroll 已统一为 panel 容器语义（窗口分支已移除）。交互手感（2026 评审项）：按钮按压反馈 `translateY(1px) scale(0.99)`、右下 chevron 为 CSS 边框绘制（复刻图例 chevron 语言）、展开内容 180ms 淡入（reduced-motion 自动瞬时）、`.story-panel` 加 `overscroll-behavior-y: contain` 防嵌套滚动滚链传染（嵌套滚动区为有意接受的设计权衡）
 - 尾部双列：市民之声每列默认收起至前 3 条/治理侧记默认展示 2 组数据卡 + 2 条引语，均为双向展开/收起（按钮带 `aria-expanded`），口径说明常显
 - `dist/` 已随高德底图替换后的最近一次 `npm run build` 更新
-- 待定项：图层开关（曾评估暂缓）、真实步行轨迹（P2 未做）、Google Fonts 加载偶发卡死（Noto Sans SC 523 个 @font-face 子集偶有一片 stuck loading 导致 load 事件不触发，境内网络 200/1.5s 正常，偶发 21s+；建议本地化 @fontsource）
+- 待定项：图层开关（已评估、可做，曾暂缓；未排期）；真实步行轨迹（决定不做：未记录、难以记录，页面保留"点位间为直线示意，非实际步行路径"说明）；Google Fonts 加载偶发卡死已解决——Astro fonts 构建期下载并自托管（dist 中 100 个 woff2 子集、无 fonts.googleapis.com/gstatic 运行时引用），无需 @fontsource

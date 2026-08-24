@@ -18,11 +18,15 @@ import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { buildBridgeHash, parseBridgeHash } from "../lib/bridge-hash";
 import { INITIAL_MAP_VIEW } from "../lib/map-view";
 import {
+  resolveStoryToggleView,
+  STORY_PANEL_EXPANDED_CLASS,
+  toggleStoryView,
+} from "../lib/story-toggle";
+import {
+  clampStoryScroll,
   getStoryPanelOffsetTop,
-  getStoryWindowTop,
   readStoryScroll,
-  resolveStoryScrollContainer,
-  resolveStoryScrollTarget,
+  STORY_SCROLL_BREAKPOINT,
   type StoryScrollMetrics,
 } from "../lib/story-scroll";
 import { isThemeMode, THEME_CHANGE_EVENT, type ThemeMode } from "../lib/theme-preferences";
@@ -373,6 +377,26 @@ function renderStoryPanel(bridgeId: string) {
       </section>`
     : "";
 
+  // 移动端（≤980px）默认折叠：仅一桥一问核心 + 证据可见；其余区块进入
+  // .story-collapsible，由「展开全文」按钮切换（桌面端始终完整展示，
+  // 按钮经 CSS 隐藏，参见 global.css）。
+  const collapsibleMarkup = `
+    <div class="story-collapsible">
+      <section class="story-section">
+        <h3>调研分析</h3>
+        ${analysisMarkup}
+      </section>
+      ${institutionMarkup}
+      <section class="story-section">
+        <h3>思政连接</h3>
+        <p>${escapeHtml(story.ideologicalLink)}</p>
+      </section>
+      <ul class="source-row" aria-label="资料来源">
+        ${sources.map((source) => `<li><span class="source-chip">${escapeHtml(source.title)}</span></li>`).join("")}
+      </ul>
+    </div>
+  `;
+
   panel.innerHTML = `
     <p class="section-label">当前点位 · ${escapeHtml(bridge.properties.river)} · ${bridge.properties.openedYear}</p>
     <h2>${escapeHtml(bridge.properties.name)}</h2>
@@ -386,19 +410,36 @@ function renderStoryPanel(bridgeId: string) {
       ${quoteMarkup}
     </section>
     ${evidenceMarkup}
-    <section class="story-section">
-      <h3>调研分析</h3>
-      ${analysisMarkup}
-    </section>
-    ${institutionMarkup}
-    <section class="story-section">
-      <h3>思政连接</h3>
-      <p>${escapeHtml(story.ideologicalLink)}</p>
-    </section>
-    <ul class="source-row" aria-label="资料来源">
-      ${sources.map((source) => `<li><span class="source-chip">${escapeHtml(source.title)}</span></li>`).join("")}
-    </ul>
+    ${collapsibleMarkup}
+    <button class="story-panel-toggle" type="button" aria-expanded="false" aria-controls="story-collapsible">
+      <span class="story-panel-label"></span>
+      <span class="story-panel-chevron" aria-hidden="true"></span>
+    </button>
   `;
+
+  bindStoryPanelToggle(panel, bridgeId);
+}
+
+/** 移动端「展开全文」状态：逐桥会话内记忆，新桥默认折叠。 */
+const storyExpandMemory = new Map<string, boolean>();
+
+function bindStoryPanelToggle(panel: HTMLElement, bridgeId: string) {
+  const button = panel.querySelector<HTMLButtonElement>(".story-panel-toggle");
+  if (!button) return;
+  const label = button.querySelector<HTMLElement>(".story-panel-label");
+  if (!label) return;
+
+  const apply = (view: ReturnType<typeof resolveStoryToggleView>) => {
+    panel.classList.toggle(STORY_PANEL_EXPANDED_CLASS, view.expanded);
+    button.setAttribute("aria-expanded", view.ariaExpanded);
+    label.textContent = view.label;
+  };
+
+  apply(resolveStoryToggleView(storyExpandMemory, bridgeId));
+
+  button.addEventListener("click", () => {
+    apply(toggleStoryView(storyExpandMemory, bridgeId));
+  });
 }
 
 function selectBridge(bridgeId: string, moveMap: boolean) {
@@ -451,31 +492,26 @@ function getStoryScrollMetrics(): StoryScrollMetrics {
     panelOffsetTop: getStoryPanelOffsetTop(panel.getBoundingClientRect().top, window.scrollY),
     panelScrollHeight: panel.scrollHeight,
     panelClientHeight: panel.clientHeight,
-    windowScrollY: window.scrollY,
-    windowInnerHeight: window.innerHeight,
-    documentHeight: document.documentElement.scrollHeight,
   };
 }
 
 function restoreStoryScroll(memory: number) {
-  const target = resolveStoryScrollTarget(getStoryScrollMetrics(), memory);
-  if (target.container === "panel") {
-    byId("story-panel").scrollTop = target.value;
-  } else {
-    window.scrollTo(0, getStoryWindowTop(getStoryScrollMetrics().panelOffsetTop) + target.value);
+  const metrics = getStoryScrollMetrics();
+  const panel = byId("story-panel");
+  // 进度记忆始终是面板相对值（折叠/展开态均有效）。
+  panel.scrollTop = clampStoryScroll(metrics, memory);
+  if (metrics.viewportWidth < STORY_SCROLL_BREAKPOINT) {
+    // 移动端：面板顶对齐视口，保证阅读位置可见。
+    window.scrollTo(0, metrics.panelOffsetTop);
   }
 }
 
 function scrollStoryToTop() {
   const metrics = getStoryScrollMetrics();
   const panel = byId("story-panel");
-  const container = resolveStoryScrollContainer(metrics.viewportWidth);
-
-  if (container === "panel") {
-    animateScroll(panel, panel.scrollTop, 0, STORY_SCROLL_DURATION);
-  } else {
-    const windowTop = getStoryWindowTop(metrics.panelOffsetTop);
-    animateWindowScroll(window.scrollY, windowTop, STORY_SCROLL_DURATION);
+  animateScroll(panel, panel.scrollTop, 0, STORY_SCROLL_DURATION);
+  if (metrics.viewportWidth < STORY_SCROLL_BREAKPOINT) {
+    animateWindowScroll(window.scrollY, metrics.panelOffsetTop, STORY_SCROLL_DURATION);
   }
 }
 
