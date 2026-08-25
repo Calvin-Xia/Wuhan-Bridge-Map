@@ -1096,20 +1096,79 @@ button:focus-visible {
   line-height: 1.5;
 }
 
-.governance-disclaimers {
+/* 页脚：居中极简合并式——身份 / 口径说明 / 备案 一条居中列（无框、无底色；DESIGN.md §3/§5）
+   字距：说明正文 ≥15px、元信息 0.8125rem/600；链接回归全站 a（江蓝+2px 下划线滑入）。 */
+.site-footer {
   display: grid;
+  gap: 0.75rem;
+  margin-block-start: clamp(2.25rem, 4vw, 3rem);
+  padding-block-start: clamp(1.25rem, 2.5vw, 1.75rem);
+  border-block-start: 1px solid var(--border);
+}
+
+.footer-filing {
+  display: grid;
+  justify-items: center;
   gap: 0.55rem;
+  text-align: center;
+  margin-inline: auto;
+}
+
+.footer-identity {
   margin: 0;
-  padding: 0.9rem 1.05rem;
-  border-inline-start: 3px solid var(--border-strong);
-  background: var(--surface-alt);
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+}
+
+.footer-note-label {
+  margin: 0;
+  color: var(--accent-hover);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.governance-disclaimers {
+  margin: 0;
+  padding: 0;
+  max-width: 68ch;
+  text-align: center;
+  background: none;
+  border: 0;
   list-style: none;
 }
 
 .governance-disclaimers li {
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  line-height: 1.65;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.footer-beian {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem 1.5rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.beian-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.beian-badge {
+  display: block;
+  width: 0.9rem;
+  height: auto;
 }
 
 .story-section--institution .quote {
@@ -1174,12 +1233,20 @@ button:focus-visible {
 }
 
 @media (min-width: 981px) {
+  .map-stage {
+    height: 100vh;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
   .workspace {
-    height: clamp(34rem, 58vh, 42rem);
+    height: auto;
+    min-height: 0;
   }
 
   .story-rail {
-    grid-template-rows: minmax(13rem, 0.9fr) minmax(16rem, 1.1fr);
+    /* 两卡按比例瓜分工作区（取消固定 min——矮屏如 1366×768 时两卡最小高度之和会
+       超过工作区导致溢出）；目录列表（8 桥）与故事卡均在卡内滚动。 */
+    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
   }
 
   .map-column {

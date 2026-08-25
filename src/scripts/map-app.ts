@@ -16,7 +16,14 @@ import {
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { buildBridgeHash, parseBridgeHash } from "../lib/bridge-hash";
-import { INITIAL_MAP_VIEW } from "../lib/map-view";
+import {
+  DATA_CENTER,
+  clampCenterToViewport,
+  computeFocusZoom,
+  computeOverviewZoom,
+  computeZoomFloor,
+  isBridgeInViewport,
+} from "../lib/map-view";
 import {
   resolveStoryToggleView,
   STORY_PANEL_EXPANDED_CLASS,
@@ -34,8 +41,8 @@ import { isThemeMode, THEME_CHANGE_EVENT, type ThemeMode } from "../lib/theme-pr
 /**
  * 地图层：高德 JS API v2 引擎（官方底图，周更矢量管线）。
  *
- * - key/安全密钥构建期注入（import.meta.env.PUBLIC_AMAP_KEY /
- *   PUBLIC_AMAP_SECURITY_CODE；git 中不落明文，仅本地 dev 回退常量）。
+ * - key/安全密钥为前端公开常量（构建期可用 import.meta.env.PUBLIC_AMAP_KEY /
+ *   PUBLIC_AMAP_SECURITY_CODE 覆盖；防护边界=控制台域名白名单+安全密钥+每日配额）。
  * - 数据（public/data GeoJSON）与初始视野均为 **GCJ-02 口径**（由官方
  *   AMap.convertFrom 一次性转换，生成物在 git；重建方法见 AGENTS.md），
  *   引擎关闭坐标纠偏（isCorrection:false）——官方确认"GCJ-02 坐标在
@@ -61,7 +68,6 @@ type AmapNamespace = {
   Marker: new (options: Record<string, unknown>) => AmapMarker;
   Polyline: new (options: Record<string, unknown>) => AmapPolyline;
   InfoWindow: new (options: Record<string, unknown>) => AmapInfoWindow;
-  Bounds: new (sw: [number, number], ne: [number, number]) => unknown;
   Pixel: new (x: number, y: number) => unknown;
   event?: { addListener?: (target: unknown, event: string, cb: (...args: unknown[]) => void) => void };
 };
@@ -73,7 +79,8 @@ type AmapMap = {
   setStyle: (style: string) => void;
   setZoomAndCenter: (zoom: number, center: AmapLngLat, immediately?: boolean, duration?: number) => void;
   setFitView: (overlays: unknown[], immediately?: boolean, avoid?: number[], maxZoom?: number) => void;
-  setLimitBounds: (bounds: unknown) => void;
+  getZoom: () => number;
+  getCenter: () => { getLng: () => number; getLat: () => number };
   destroy: () => void;
 };
 
@@ -102,9 +109,6 @@ const AMAP_SCRIPT_URL = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}`;
 const AMAP_STYLE_LIGHT = "amap://styles/normal";
 const AMAP_STYLE_DARK = "amap://styles/darkblue";
 
-const STUDY_AREA_BOUNDS_SW: [number, number] = [114.15, 30.4];
-const STUDY_AREA_BOUNDS_NE: [number, number] = [114.525, 30.725];
-
 const state = {
   activeBridgeId: "",
   bridges: [] as BridgeFeature[],
@@ -116,6 +120,11 @@ const state = {
   infoWindow: null as AmapInfoWindow | null,
   bridgeMarkers: new Map<string, AmapMarker>(),
   routePolylines: new Map<string, AmapPolyline[]>(),
+  /** 切桥两段动画：缩小段完成后是否等待推入段。 */
+  flyPending: false,
+  flyToken: 0,
+  /** 程序化全貌定位是否处于"微松兜底"态（仅极宽屏 zoom < 地板时；用户一交互即清除）。 */
+  cameraRelaxed: false,
 };
 
 window.addEventListener(THEME_CHANGE_EVENT, (event) => {
@@ -187,9 +196,17 @@ async function createMap() {
   const amap = await loadAmapScript();
   state.amap = amap;
 
+  const container = byId("bridge-map");
+  const rect = container.getBoundingClientRect();
+  // 初始视野 = 数据全貌（数据盒 + 圆点边距恰好放满，中心=数据质心）；
+  // 宽高比 ≤1.94 时该 zoom ≥ 地板，parity 零妥协；极宽屏时才落入微松兜底。
+  const overviewZoom = computeOverviewZoom(rect.width, rect.height);
+  const floor = computeZoomFloor(rect.width, rect.height);
+  state.cameraRelaxed = overviewZoom < floor;
+
   const map = new amap.Map("bridge-map", {
-    zoom: INITIAL_MAP_VIEW.zoom,
-    center: INITIAL_MAP_VIEW.center as [number, number],
+    zoom: overviewZoom,
+    center: DATA_CENTER,
     viewMode: "2D",
     style: getDocumentTheme() === "dark" ? AMAP_STYLE_DARK : AMAP_STYLE_LIGHT,
     zooms: [9, 17],
@@ -199,7 +216,20 @@ async function createMap() {
   state.map = map;
   // 调试/自动化钩子（无副作用；供 QA 测量缩放漂移）。
   (window as unknown as { __amapDebugMap?: AmapMap }).__amapDebugMap = map;
-  map.setLimitBounds(new amap.Bounds(STUDY_AREA_BOUNDS_SW, STUDY_AREA_BOUNDS_NE));
+
+  // 视口⊆盒的运行时钳制（不用 setLimitBounds——实测拖动中不钳制、松手后回弹
+  // 落点错误，见 AGENTS.md 踩坑记录）。zoomchange 只做"软地板"（打断缩放动画
+  // 拉到地板）；zoomend/moveend/resize 做全量终检（含中心钳制，不打断动画）。
+  map.on("zoomchange", enforceZoomFloor);
+  map.on("zoomend", enforceCamera);
+  map.on("moveend", enforceCamera);
+  map.on("resize", enforceCamera);
+  // 切桥两段动画的推入段接力：缩小段结束（moveend）后启动推入段；用户一交互
+  // （拖拽/滚轮/双指）即取消（flyPending=false + 令牌失效），尊重用户位置。
+  map.on("moveend", onFlyPhaseOneEnd);
+  map.on("dragstart", cancelFly);
+  container.addEventListener("wheel", cancelFly, { passive: true });
+  container.addEventListener("touchstart", cancelFly, { passive: true });
 
   renderBridgeOverlays();
   renderRouteOverlays();
@@ -209,13 +239,126 @@ async function createMap() {
     (item) => item.properties.id === state.activeBridgeId,
   );
   if (focusBridge && parseBridgeHash(window.location.hash)) {
-    // 深度链接定位：打开 #bridge-<id> 时把地图居中到该桥。
-    map.setZoomAndCenter(12.3, focusBridge.geometry.coordinates as [number, number]);
+    // 深度链接定位：初始即全貌，直接单段推入特写（与切换桥同源 zoom）。
+    flyToBridge(focusBridge, true);
   }
 
   map.on("complete", () => {
     status.hidden = true;
   });
+}
+
+/** 切桥两段动画：全貌（缩小段）→ 桥特写（推入段）。 */
+function flyToBridge(bridge: BridgeFeature, skipOverview = false) {
+  const map = state.map;
+  if (!map) return;
+
+  const rect = byId("bridge-map").getBoundingClientRect();
+  const target = bridge.geometry.coordinates as [number, number];
+  const closeZoom = computeFocusZoom(target, rect.width, rect.height);
+
+  if (prefersReducedMotion()) {
+    map.setZoomAndCenter(closeZoom, target, true);
+    return;
+  }
+
+  // 距离感知混合：目标桥已在当前视口内（含边距）→ 单段直达滑行
+  // （maplibre 手感，无脉冲无中程停留；初始全貌点任何桥、相邻桥切换均命中）；
+  // 目标在视口外（跨江南北/天兴洲等远距）→ 两段"缩小推入"（语境值得展示）。
+  const contextVisible = isBridgeInViewport(
+    target,
+    [map.getCenter().getLng(), map.getCenter().getLat()],
+    map.getZoom(),
+    rect.width,
+    rect.height,
+  );
+  if (skipOverview || contextVisible) {
+    // 深链/同视口直达：直接滑到桥特写。
+    map.setZoomAndCenter(closeZoom, target, false, 620);
+    return;
+  }
+
+  // 缩小段：中心 = 当前↔目标的中点（按地板约束钳制）——中点落在两桥连线上，
+  // 路径成直线、无"先往中心走再回来"的折返；zoom 缩到数据全貌尺度并随中点
+  // 平移（距离近的桥对看近域上下文，远桥对自然经过质心附近）。
+  const current = map.getCenter();
+  const mid: AmapLngLat = [
+    (current.getLng() + target[0]) / 2,
+    (current.getLat() + target[1]) / 2,
+  ];
+  const overviewZoom = computeOverviewZoom(rect.width, rect.height);
+  const floor = computeZoomFloor(rect.width, rect.height);
+  const via = clampCenterToViewport(mid, overviewZoom, rect.width, rect.height);
+  const token = ++state.flyToken;
+  state.flyPending = true;
+  state.cameraRelaxed = overviewZoom < floor;
+  map.setZoomAndCenter(overviewZoom, via, false, 380);
+
+  // 推入段：由 moveend 接力启动（令牌防串：新切换覆盖旧序列）。
+  const startFocus = () => {
+    if (state.flyToken !== token || !state.flyPending) return;
+    state.flyPending = false;
+    state.cameraRelaxed = false;
+    map.setZoomAndCenter(closeZoom, target, false, 620);
+  };
+  flyRelay.listeners.add(startFocus);
+}
+
+/** moveend 接力管理器：每次飞行注册一次性启动器（令牌失效即空转）。 */
+const flyRelay = { listeners: new Set<() => void>() };
+
+function onFlyPhaseOneEnd() {
+  for (const listener of [...flyRelay.listeners]) {
+    flyRelay.listeners.delete(listener);
+    listener();
+  }
+}
+
+function cancelFly() {
+  state.flyPending = false;
+  state.cameraRelaxed = false;
+  flyRelay.listeners.clear();
+}
+
+/** 缩放软地板：缩放级别低于动态下限时立即拉回（幂等，无回环；微松兜底态除外）。 */
+function enforceZoomFloor() {
+  const map = state.map;
+  if (!map || state.cameraRelaxed) return;
+  const rect = byId("bridge-map").getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const floor = computeZoomFloor(rect.width, rect.height);
+  const currentZoom = map.getZoom();
+  if (currentZoom >= floor) return;
+
+  const centerLngLat = map.getCenter();
+  map.setZoomAndCenter(floor, [centerLngLat.getLng(), centerLngLat.getLat()], true);
+}
+
+/** 视口⊆研究区盒的全量终检（幂等；越界时一次性瞬移回合法位）。 */
+function enforceCamera() {
+  const map = state.map;
+  if (!map) return;
+  const rect = byId("bridge-map").getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const floor = computeZoomFloor(rect.width, rect.height);
+  const currentZoom = map.getZoom();
+  const centerLngLat = map.getCenter();
+  const correctedZoom = currentZoom < floor ? floor : currentZoom;
+  const [targetLng, targetLat] = clampCenterToViewport(
+    [centerLngLat.getLng(), centerLngLat.getLat()],
+    correctedZoom,
+    rect.width,
+    rect.height,
+  );
+  const centerMoved =
+    Math.abs(targetLng - centerLngLat.getLng()) > 1e-6 ||
+    Math.abs(targetLat - centerLngLat.getLat()) > 1e-6;
+
+  if (currentZoom < floor || centerMoved) {
+    map.setZoomAndCenter(correctedZoom, [targetLng, targetLat], true);
+  }
 }
 
 function renderBridgeOverlays() {
@@ -473,12 +616,8 @@ function selectBridge(bridgeId: string, moveMap: boolean) {
   const bridge = state.bridges.find((item) => item.properties.id === bridgeId);
   if (!bridge) return;
 
-  state.map.setZoomAndCenter(
-    12.3,
-    bridge.geometry.coordinates as [number, number],
-    false,
-    600,
-  );
+  // 切桥动画：先缩到数据全貌（缩小段），再推入桥特写（推入段）。
+  flyToBridge(bridge);
 }
 
 const storyScrollMemory = new Map<string, number>();

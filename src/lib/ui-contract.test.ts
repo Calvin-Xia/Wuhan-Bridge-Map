@@ -52,7 +52,7 @@ describe("dashboard interface contract", () => {
 
   it("declares the balanced workspace, three-column evidence grid and paired chart row", () => {
     expect(styles).toContain("grid-template-columns: minmax(22rem, 0.72fr) minmax(0, 1fr)");
-    expect(styles).toContain("height: clamp(34rem, 58vh, 42rem)");
+    expect(styles).toMatch(/@media \(min-width: 981px\)[^]*\.map-stage\s*\{[^}]*height: 100vh/);
     expect(styles).toContain("grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.9fr) minmax(0, 1.05fr)");
     expect(styles).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
     expect(styles).toContain(".chart-icon");
@@ -114,6 +114,19 @@ describe("dashboard interface contract", () => {
     expect(styles).toContain(".governance-stat-source");
     expect(styles).toContain(".quote--institution");
     expect(styles).toContain(".governance-disclaimers");
+  });
+
+  it("declares the full-width footer with its disclaimer band and filing links", () => {
+    expect(page).toContain('<footer class="site-footer"');
+    expect(page).toContain('href="https://beian.miit.gov.cn/"');
+    expect(page).toContain("渝ICP备2026000319号");
+    expect(page).toContain("recordcode=50010102001439");
+    expect(page).toContain("渝公网安备50010102001439号");
+    expect(page).toContain('class="beian-badge"');
+    expect(styles).toContain(".site-footer");
+    expect(styles).toContain(".footer-beian");
+    expect(styles).toContain(".beian-link");
+    expect(styles).toContain(".beian-badge");
   });
 
   it("keeps the governance heading aligned with the evidence headings", () => {

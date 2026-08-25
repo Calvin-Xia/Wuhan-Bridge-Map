@@ -8,6 +8,7 @@ dist/
 private-data/
 .playwright-mcp/
 .playwright-cli/
+.pw-session/
 .npm-cache/
 output/
 /current-8788.png
