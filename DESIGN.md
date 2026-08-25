@@ -287,7 +287,6 @@ main.app-shell
     header.map-header
     aside.story-rail
       nav[aria-label="桥梁目录"] > ul.bridge-list > li > button.bridge-item
-      article.story-panel
     section.map-column
       aside.map-legend > ul.map-legend-list > li > button.map-legend-entry
   section.evidence-band
@@ -295,6 +294,11 @@ main.app-shell
     figure.chart-block (three + two + two, 共七张)
     section.voice-band
       ul.voice-list (网络版 / 现场版两组)
+article#story-panel（body 直属故事卡弹窗）
+  div.story-modal-bar（返回钮 + 当前点位胶囊，面板内首行）
+  div#story-panel-content（故事卡内容）
+div.story-modal-backdrop（全屏背景层：压暗 + 地图 filter 模糊）
+aside#story-hint（首次引导提示，会话级一次）
 ```
 
 `story-rail` 与 `map-column` 是同一工作区的直接子元素。目录中 `li > button` 直接表达可选桥梁，不能再插入“卡片外壳”或装饰性 `div`。
@@ -358,8 +362,10 @@ main.app-shell
   }
 
   @keyframes page-enter {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    /* 纯 opacity：动画带 transform（含结束帧 translateY(0)）会被 fill:both
+       永久残留——transform 祖先会成为 fixed 弹窗的包含块（实测踩坑）。 */
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .reveal {
@@ -397,7 +403,7 @@ document.querySelectorAll<HTMLElement>(".reveal").forEach((element) => observer.
 ### Hover, Focus and Selection
 
 - 桥梁目录、地图标记和相关故事同步更新，状态变化时只使用 180ms 颜色和 1px 位移。
-- MapLibre 的 `flyTo` 仅在用户选择桥梁时发生，时长应在 550-700ms，不能随页面滚动自动移动。
+- 地图飞行（高德 `setZoomAndCenter`；旧 MapLibre 约定沿用）仅在用户选择桥梁时发生，时长应在 550-700ms，不能随页面滚动自动移动。
 - ECharts 保留 tooltip 与数据高亮，不增加循环图表动画。
 - 每一个鼠标悬停规则必须有等价的 `:focus-visible` 键盘样式。
 
@@ -436,7 +442,7 @@ document.querySelectorAll<HTMLElement>(".reveal").forEach((element) => observer.
 
 - ❌ 不做框中套框、卡片中再放卡片，或为排版添加无意义 `div`。
 - ❌ 不将七个图表制作成相同悬浮卡片。
-- ❌ 不使用紫蓝霓虹、通用玻璃拟态或大面积模糊。
+- ❌ 不使用紫蓝霓虹、通用玻璃拟态或大面积模糊（**故事卡弹窗的背景虚化为有意例外**：地图容器 `filter: blur(8px)` 仅在弹窗打开时应用，压暗 0.45 保证阅读对比）。
 - ❌ 不使用标题渐变、文字投影、装饰性大写标签或编号眉题。
 - ❌ 不使用滚动进度条、视差、滚动劫持、固定滚动叙事或全局自定义光标。
 - ❌ 不用旅游攻略式图标、彩色状态点或无证据的精确统计数字。
@@ -486,13 +492,13 @@ const THEME_CHANGE_EVENT = "bridge-theme-change";
 
 | Name | Width | Key Changes |
 | --- | --- | --- |
-| Desktop | `> 980px` | 左侧目录与故事区固定宽度，地图占主区域，证据图表为三列 + 两列 + 两列（共七张）。 |
-| Tablet | `561px-980px` | 地图置于上方，目录与故事区在下方纵向排列，图表单列。 |
+| Desktop | `> 980px` | 左侧桥目录固定宽度，地图占主区域，证据图表为三列 + 两列 + 两列（共七张）。 |
+| Tablet | `561px-980px` | 地图置于上方，桥目录在下方纵向排列，图表单列。 |
 | Mobile | `<= 560px` | 标题和指标纵向排列，目录可横向滑动，地图最小高度 32rem，所有证据区单列。 |
 
 **Touch Targets:** 所有可点按项目最小为 44px × 44px。
 
-**Collapsing Strategy:** 小屏不把地图缩成小组件。优先保留完整地图区域，再将桥梁目录转为横向滚动列表，将故事内容放在地图后方。图表按阅读顺序一列排列。
+**Collapsing Strategy:** 小屏不把地图缩成小组件。优先保留完整地图区域，再将桥梁目录转为横向滚动列表，**故事卡做成全端统一弹窗浮层**（移动端底部悬浮卡：顶部露 8dvh 背景 + 自适应限高内滚；桌面居中卡：`min(34rem, 100vw−2.5rem)`）。图表按阅读顺序一列排列。
 
 ```css
 @media (max-width: 980px) {

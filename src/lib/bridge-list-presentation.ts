@@ -11,7 +11,9 @@ export function createBridgeListMarkup(bridges: BridgeFeature[], activeBridgeId:
       return `<li><button class="bridge-item${activeClass}" type="button" data-bridge-id="${escapeHtml(properties.id)}"${ariaCurrent}>
         <strong>${escapeHtml(properties.name)}</strong>
         <span class="bridge-meta"><span>${properties.openedYear}</span><span>${escapeHtml(properties.bridgeType)}</span><b>${escapeHtml(properties.researchStatus)}</b></span>
-        <span>${escapeHtml(properties.question)}</span>
+        <span class="bridge-item-question">${escapeHtml(properties.question)}</span>
+        ${selection.isActive ? '<span class="bridge-item-badge">故事卡</span>' : ""}
+        <span class="bridge-item-chevron" aria-hidden="true"></span>
       </button></li>`;
     })
     .join("");

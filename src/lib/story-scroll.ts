@@ -2,11 +2,10 @@
  * Story panel scroll helpers.
  *
  * The 一桥一问 panel is its own scroll container at every breakpoint:
- * on desktop the `story-rail` grid bounds it, on mobile the panel gets a
- * bounded max-height with the dual collapsed/expanded state (see
- * `global.css`, `@media (max-width: 980px)`). Scroll memory is therefore
- * always measured in panel-relative units (`panel.scrollTop`); on mobile
- * the window is additionally positioned so the panel stays in view.
+ * on desktop the `story-rail` grid bounds it; on mobile the panel is the
+ * near-fullscreen story modal (see `global.css`, `@media (max-width: 980px)`).
+ * Scroll memory is therefore always measured in panel-relative units
+ * (`panel.scrollTop`) — one semantic for both surfaces.
  */
 
 export const STORY_SCROLL_BREAKPOINT = 981;

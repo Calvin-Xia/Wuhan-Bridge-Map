@@ -75,12 +75,6 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
                 <li class="bridge-skeleton" aria-hidden="true"></li>
               </ul>
             </nav>
-
-            <article id="story-panel" class="story-panel" aria-live="polite">
-              <p class="section-label">当前点位</p>
-              <h2>数据载入中</h2>
-              <p>正在读取桥梁点位、故事卡片和资料索引。</p>
-            </article>
           </aside>
 
           <section class="map-column" aria-label="交互地图">
@@ -252,6 +246,32 @@ const description = "从一桥一问看工程报国、城市治理与民生获�
         </footer>
       </section>
     </main>
+
+    <!-- 故事卡弹窗（body 直属，全端统一）：面板 + 背景层；
+         fixed 定位锚定视口，与页面结构零耦合。 -->
+    <article id="story-panel" class="story-panel" aria-live="polite">
+      <!-- 顶部条 = 卡片内首行（全端统一）：返回按钮 + 当前点位胶囊。 -->
+      <div class="story-modal-bar" id="story-modal-bar">
+        <button class="story-modal-close" id="story-modal-close" type="button" aria-label="返回地图">
+          <span class="story-modal-chevron" aria-hidden="true"></span>
+        </button>
+        <span class="story-modal-context" id="story-modal-context">当前点位</span>
+      </div>
+      <div id="story-panel-content">
+        <p class="section-label">当前点位</p>
+        <h2>数据载入中</h2>
+        <p>正在读取桥梁点位、故事卡片和资料索引。</p>
+      </div>
+    </article>
+    <!-- 弹窗背景层：全屏高斯模糊 + 压暗（地图容器 filter 原生实现，无第三方库）；
+         点击背景区域同样关闭弹窗。 -->
+    <div class="story-modal-backdrop" id="story-modal-backdrop" aria-hidden="true"></div>
+
+    <!-- 首次引导提示：点桥即打开故事卡（会话级一次，自动消退/可关闭）。 -->
+    <aside class="story-hint" id="story-hint" role="status" hidden>
+      <p>点击目录或地图上的桥点，查看该桥的故事卡</p>
+      <button class="story-hint-close" id="story-hint-close" type="button" aria-label="关闭提示">×</button>
+    </aside>
 
     <script>
       void (async () => {

@@ -1,8 +1,10 @@
 /**
  * URL hash helpers for deep-linking.
  *
- * - Bridge deep link: `#bridge-<id>` selects and focuses a bridge on load,
- *   and is written back on selection via `history.replaceState`.
+ * - Bridge deep link: `#bridge-<id>` is a **one-shot** entry point — it selects
+ *   the bridge on load (and opens the story modal on mobile), then the hash is
+ *   cleared from the URL by the client. Selection never writes the hash back,
+ *   so refreshing or switching bridges never re-triggers the modal.
  * - Section anchors (`#section-map` etc.) use native anchor scrolling.
  */
 

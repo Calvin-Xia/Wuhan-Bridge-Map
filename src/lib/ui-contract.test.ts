@@ -81,25 +81,39 @@ describe("dashboard interface contract", () => {
     expect(styles).toContain("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)");
   });
 
-  it("declares the desktop-only full story panel and touch-target toggle", () => {
-    expect(styles).toMatch(/\.story-panel-toggle\s*\{[^}]*display: none/);
+  it("keeps the story panel out of the desktop layout untouched (modal bar desktop-hidden)", () => {
+    expect(styles).toMatch(/\.story-modal-bar\s*\{[^}]*display: none/);
+    expect(styles).not.toContain("story-panel-toggle");
+    expect(styles).not.toContain("story-collapsible");
   });
 
-  it("declares the mobile story panel dual-state bounds", () => {
-    expect(styles).toContain(".story-panel-toggle");
-    expect(styles).toContain("max-height: 28rem");
-    expect(styles).toContain("max-height: min(60dvh, 36rem)");
-    expect(styles).toMatch(/\.story-panel \.story-collapsible\s*\{[^}]*display: none/);
-    expect(styles).toMatch(/\.story-panel-toggle\s*\{[^}]*min-height: 2\.75rem/);
+  it("declares the mobile near-fullscreen story modal with its map strip", () => {
+    expect(styles).toMatch(/\.story-panel\.is-open\s*\{[^}]*transform: translateY\(0\)/);
+    expect(styles).toMatch(/\.story-panel\s*\{[^}]*top: max\(8dvh, 3\.5rem\)/);
+    expect(styles).toMatch(/\.story-panel\.is-open \.story-modal-bar\s*\{[^}]*display: flex/);
+    expect(styles).toContain("body.story-modal-open");
   });
 
-  it("keeps the story toggle interaction polish in line with the app language", () => {
-    expect(styles).toMatch(/\.story-panel-toggle:active\s*\{[^}]*translateY\(1px\) scale\(0\.99\)/);
-    expect(styles).toContain(".story-panel-chevron");
-    expect(styles).toMatch(/\.story-panel-chevron\s*\{[^}]*border-inline-end: 1\.6px/);
-    expect(styles).toMatch(/\.story-panel\.is-expanded \.story-panel-chevron\s*\{[^}]*rotate\(225deg\)/);
-    expect(styles).toContain("story-fade-in");
-    expect(styles).toMatch(/@keyframes story-fade-in\s*\{[^}]*opacity: 0/);
+  it("declares the floating card modal with a canvas-effective gaussian map backdrop", () => {
+    expect(styles).toMatch(/\.story-panel\s*\{[^}]*border-radius: 24px/);
+    expect(styles).toMatch(/\.story-panel\s*\{[^}]*left: 0\.75rem/);
+    expect(styles).toMatch(/body\.story-modal-open \.map-canvas\s*\{[^}]*filter: blur\(8px\)/);
+    expect(styles).toMatch(/\.map-column\s*\{[^}]*z-index: 0/);
+    expect(styles).toMatch(/max-height: calc\(100dvh - 8dvh - 0\.75rem\)/);
+    expect(styles).toMatch(
+      /body\.story-modal-open \.story-modal-backdrop\s*\{[^}]*pointer-events: auto/,
+    );
+  });
+
+  it("declares the unified desktop centered modal with a restrained width", () => {
+    expect(styles).toMatch(/\.story-panel\s*\{[^}]*width: min\(34rem, calc\(100vw - 2\.5rem\)\)/);
+    expect(styles).toMatch(/\.story-panel\s*\{[^}]*margin: auto/);
+    expect(styles).toMatch(/\.story-modal-bar\s*\{[^}]*position: sticky/);
+  });
+
+  it("keeps the story modal polish in line with the app language", () => {
+    expect(styles).toMatch(/\.story-modal-close:active\s*\{[^}]*translateY\(1px\) scale\(0\.99\)/);
+    expect(styles).toMatch(/\.story-modal-chevron\s*\{[^}]*border-inline-start: 1\.6px/);
     expect(styles).toMatch(/\.story-panel\s*\{[^}]*overscroll-behavior-y: contain/);
   });
 

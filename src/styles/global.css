@@ -313,7 +313,8 @@ button:focus-visible {
 
 .story-rail {
   display: grid;
-  grid-template-rows: minmax(15rem, 0.9fr) minmax(19rem, 1.1fr);
+  /* 仅含桥目录（故事卡已统一为 body 直属弹窗，不再占左栏流）。 */
+  grid-template-rows: minmax(0, 1fr);
   gap: clamp(1rem, 2vw, 1.5rem);
   min-height: 0;
   min-width: 0;
@@ -347,11 +348,12 @@ button:focus-visible {
 }
 
 .bridge-item {
+  position: relative;
   display: grid;
   width: 100%;
   min-height: 5.35rem;
   gap: 0.35rem;
-  padding: 0.75rem 0.8rem;
+  padding: 0.75rem 2.1rem 0.75rem 0.8rem;
   color: var(--text);
   text-align: left;
   background: transparent;
@@ -394,7 +396,7 @@ button:focus-visible {
   line-height: 1.35;
 }
 
-.bridge-item > span:last-child {
+.bridge-item-question {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -402,6 +404,45 @@ button:focus-visible {
   color: var(--text-secondary);
   font-size: 0.875rem;
   line-height: 1.55;
+}
+
+/* 「查看故事」方向暗示：与图例/折叠 chevron 同语言（CSS 边框绘制）。 */
+.bridge-item-chevron {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  inset-block-start: 50%;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-block-start: -0.31rem;
+  border-inline-end: 1.6px solid var(--text-tertiary);
+  border-block-end: 1.6px solid var(--text-tertiary);
+  transform: rotate(-45deg);
+  pointer-events: none;
+  transition: border-color 180ms ease;
+}
+
+.bridge-item:hover .bridge-item-chevron {
+  border-color: var(--accent-hover);
+}
+
+.bridge-item.is-active .bridge-item-chevron,
+.bridge-item[aria-current="true"] .bridge-item-chevron {
+  border-color: var(--accent);
+}
+
+/* 选中桥的「故事卡」微标：提示当前桥已在弹窗中/可打开。 */
+.bridge-item-badge {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  inset-block-end: 0.55rem;
+  padding: 0.12rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent-hover);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  pointer-events: none;
 }
 
 .bridge-meta {
@@ -430,6 +471,13 @@ button:focus-visible {
   /* 有界面板（桌面 grid 界内 / 移动端 max-height）滚到底不再传染整页滚动。 */
   overscroll-behavior-y: contain;
   border-block-start: 3px solid var(--accent);
+  /* 隐藏面板滚动条：滚动条是边框盒内独立绘制层，圆角裁不到（会戳破
+     卡片圆角）；滚动功能保留（滚轮/触摸/键盘），移动端本就自动隐藏。 */
+  scrollbar-width: none;
+}
+
+.story-panel::-webkit-scrollbar {
+  display: none;
 }
 
 .story-panel h2 {
@@ -455,9 +503,172 @@ button:focus-visible {
   color: var(--text);
 }
 
-/* 「展开全文」仅移动端（≤980px）存在；桌面端面板始终完整展示。 */
-.story-panel-toggle {
+/* 故事卡弹窗系统（body 直属，全端统一）：
+   - 顶部条默认隐藏，随弹窗打开显示（面板内首行，全端同款式）；
+   - 背景层全屏压暗，弹窗打开时激活（地图容器的 filter 模糊见下方）；
+   - 触摸/滚轮由背景层拦截（不使用 body overflow 滚动锁——
+     实测锁会摧毁窗口滚动位置：打开瞬间 scrollY 归零且解锁不恢复）。 */
+.story-modal-bar {
   display: none;
+  /* 面板内首行：滚动时粘顶常驻（返回按钮随时可达）；顶部内边距由
+     bar 自带（面板自身 padding-top 置 0）——否则 sticky 会粘在
+     内容区顶（padding 下方），滚下去时条上方留一条空白带。 */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.4rem 0.2rem 0.9rem;
+  background: var(--surface);
+  border-block-end: 1px solid var(--border);
+}
+
+.story-panel.is-open .story-modal-bar {
+  display: flex;
+}
+
+.story-modal-context {
+  max-width: calc(100% - 3.2rem);
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.story-modal-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent-hover);
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.story-modal-close:hover {
+  background: var(--surface-hover);
+}
+
+.story-modal-close:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* 返回方向暗示：与图例/折叠 chevron 同语言（CSS 边框绘制）。 */
+.story-modal-chevron {
+  display: block;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-inline-start: 0.18rem;
+  border-inline-start: 1.6px solid currentColor;
+  border-block-start: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.story-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgba(10, 16, 14, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+  transition: opacity 240ms ease;
+}
+
+body.story-modal-open .story-modal-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* 地图容器高斯模糊：filter 对 canvas 必然生效（backdrop-filter 只模糊
+   普通 DOM 合成层，对高德 canvas 无效——实测"部分文字糊、地图清晰"的
+   割裂观感）。map-column 已用 z-index:0 隔离层叠上下文，此 filter 不会
+   影响弹窗三件套（panel/bar/backdrop 均不在 #bridge-map 内）。
+   不加 transition——全画布逐帧 blur 在中端机上掉帧。 */
+body.story-modal-open .map-canvas {
+  filter: blur(8px);
+}
+
+/* 首次引导提示（故事卡弹窗的可发现性）：底部悬浮条，会话级一次。 */
+.story-hint {
+  position: fixed;
+  inset-inline: 0.9rem;
+  inset-block-end: max(1rem, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 30rem;
+  margin-inline: auto;
+  padding: 0.75rem 0.85rem 0.75rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  font-size: 0.88rem;
+}
+
+.story-hint p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.story-hint-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.story-hint-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.story-hint[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .story-hint:not([hidden]) {
+    animation: story-hint-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes story-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tag-row,
@@ -554,6 +765,9 @@ button:focus-visible {
 
 .map-column {
   position: relative;
+  /* z-index: 0 建立层叠上下文：把 AMap 内部高 z-index 控件（审图号/缩放钮，
+     官方 z 值可达 3000+）关进容器层，不再穿透弹窗层。 */
+  z-index: 0;
   min-height: 31rem;
   overflow: hidden;
   background: var(--map-wash);
@@ -1244,13 +1458,41 @@ button:focus-visible {
   }
 
   .story-rail {
-    /* 两卡按比例瓜分工作区（取消固定 min——矮屏如 1366×768 时两卡最小高度之和会
-       超过工作区导致溢出）；目录列表（8 桥）与故事卡均在卡内滚动。 */
-    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    /* 桌面左栏现仅含桥目录（故事卡已统一为弹窗，body 直属）；
+       目录列表在卡内滚动。 */
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .map-column {
     min-height: 0;
+  }
+
+  /* 桌面弹窗：居中悬浮卡片（背后全屏模糊+压暗）；宽度克制（≤34rem）。
+     margin:auto + inset:0 居中，高度随内容（max-height 限内滚）。 */
+  .story-panel {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(34rem, calc(100vw - 2.5rem));
+    height: fit-content;
+    max-height: min(82dvh, 46rem);
+    overflow: auto;
+    z-index: 40;
+    border-radius: 24px;
+    padding: 0 2.2rem 2.4rem;
+    border-block-start: 3px solid var(--accent);
+    background: var(--surface);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 200ms ease, transform 200ms ease;
+    visibility: hidden;
+  }
+
+  .story-panel.is-open {
+    opacity: 1;
+    transform: scale(1);
+    visibility: visible;
   }
 }
 
@@ -1262,7 +1504,6 @@ button:focus-visible {
   .page-enter {
     animation: page-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-
   .reveal {
     opacity: 0;
     transform: translateY(12px);
@@ -1291,14 +1532,15 @@ button:focus-visible {
 }
 
 @keyframes page-enter {
+  /* 纯 opacity 入场：若动画带 transform（含结束帧 translateY(0)），
+     fill:both 会让 transform 永久残留——transform 祖先会成为 fixed
+     后代的包含块，弹窗三件套会钉在地图块上随页面滚动（实测根因）。 */
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -1375,7 +1617,7 @@ button:focus-visible {
   }
 
   .story-rail {
-    grid-template-rows: auto auto;
+    grid-template-rows: auto;
   }
 
   .bridge-index {
@@ -1386,66 +1628,40 @@ button:focus-visible {
     max-height: 22rem;
   }
 
-  /* 一桥一问故事卡：双态都限界。折叠态只显示核心 + 证据（安全网 28rem），
-     展开态全量内容进入有界内滚（min(60vh, 36rem)，动态视口单位 dvh 覆盖），
-     页面流长度恒定。 */
+  /* 一桥一问故事卡：移动端（≤980px）近全屏弹窗（单 DOM；桌面端保持左栏面板原样）。
+     关闭态藏在屏外（transform 下移 + 隐藏），打开态从底部滑入（240ms，
+     prefers-reduced-motion 全局豁免）；面板脱离页面流，卡片带成为流中唯一块。
+     .story-modal-bar 顶部条仅弹窗打开时出现：半透明渐变透出地图背景（"地图还在"
+     的叙事锚点），整条可点关闭返回地图。 */
   .story-panel {
-    max-height: 28rem;
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    /* top 使用 max() 双值：8dvh 不支持时回退 8vh/3.5rem，保证顶部条定位可用。 */
+    top: max(8vh, 3.5rem);
+    top: max(8dvh, 3.5rem);
+    margin: 0;
+    z-index: 40;
+    /* 悬浮卡片：四周留白 + 全圆角 + 大阴影，与"通栏铺满"拉开距离。 */
+    border-radius: 24px;
+    /* 顶部内边距移交 sticky bar（保证滚动时条撑到面板顶），内容区从 bar 下开始。 */
+    padding: 0 1.15rem 2rem;
+    /* 浮层必须自绘背景（桌面版背景借自左栏容器，fixed 后借用失效）。 */
+    background: var(--surface);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+    /* 自适应限高：内容少时卡片矮（悬浮感），内容长时到限内滚；
+       先写 vh 兜底再被 dvh 覆盖——dvh 不支持的浏览器也能正确限高，
+       杜绝"内容超出视口无法查看"。 */
+    max-height: calc(100vh - 8vh - 0.75rem);
+    max-height: calc(100dvh - 8dvh - 0.75rem);
+    transform: translateY(105%);
+    transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    visibility: hidden;
   }
 
-  .story-panel.is-expanded {
-    max-height: min(60vh, 36rem);
-    max-height: min(60dvh, 36rem);
-  }
-
-  .story-panel .story-collapsible {
-    display: none;
-  }
-
-  .story-panel.is-expanded .story-collapsible {
-    display: block;
-    animation: story-fade-in 180ms ease-out;
-  }
-
-  .story-panel-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 2.75rem;
-    margin-block-start: 0.85rem;
-    padding-inline: 0.9rem;
-    color: var(--accent-hover);
-    font-weight: 700;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    background: transparent;
-    cursor: pointer;
-    transition: background 180ms ease, color 180ms ease;
-  }
-
-  .story-panel-toggle:hover {
-    color: var(--text-strong);
-    background: var(--surface-hover);
-  }
-
-  .story-panel-toggle:active {
-    transform: translateY(1px) scale(0.99);
-  }
-
-  /* 方向暗示：复刻移动端图例 chevron 语言（CSS 边框绘制）。 */
-  .story-panel-chevron {
-    flex: 0 0 auto;
-    width: 0.62rem;
-    height: 0.62rem;
-    margin-inline-start: 0.45rem;
-    border-inline-end: 1.6px solid var(--text-tertiary);
-    border-block-end: 1.6px solid var(--text-tertiary);
-    transform: rotate(45deg);
-    transition: transform 180ms ease;
-  }
-
-  .story-panel.is-expanded .story-panel-chevron {
-    transform: rotate(225deg);
+  .story-panel.is-open {
+    transform: translateY(0);
+    visibility: visible;
   }
 
   .chart-grid {
@@ -1458,16 +1674,6 @@ button:focus-visible {
     padding-inline-start: 0;
     border-block-start: 1px solid var(--border);
     border-inline-start: 0;
-  }
-}
-
-@keyframes story-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
   }
 }
 

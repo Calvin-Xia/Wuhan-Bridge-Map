@@ -15,7 +15,7 @@ import {
 } from "../lib/map-layer-spec";
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
-import { buildBridgeHash, parseBridgeHash } from "../lib/bridge-hash";
+import { parseBridgeHash } from "../lib/bridge-hash";
 import {
   DATA_CENTER,
   clampCenterToViewport,
@@ -25,15 +25,8 @@ import {
   isBridgeInViewport,
 } from "../lib/map-view";
 import {
-  resolveStoryToggleView,
-  STORY_PANEL_EXPANDED_CLASS,
-  toggleStoryView,
-} from "../lib/story-toggle";
-import {
   clampStoryScroll,
-  getStoryPanelOffsetTop,
   readStoryScroll,
-  STORY_SCROLL_BREAKPOINT,
   type StoryScrollMetrics,
 } from "../lib/story-scroll";
 import { isThemeMode, THEME_CHANGE_EVENT, type ThemeMode } from "../lib/theme-preferences";
@@ -163,6 +156,15 @@ async function initMapApp() {
     await createMap();
     renderMapLegend(routes);
     bindLegendToggle();
+    bindStoryModal();
+    if (hashBridgeId) {
+      // 一次性深链：弹出该桥故事卡弹窗（地图已在后台完成飞行定位），
+      // 随后立即清除 URL hash——刷新/切桥永不重复弹窗。
+      openStoryModal();
+      clearBridgeHash();
+    }
+    // 首次引导提示：深链（已示范弹窗）或目录已活跃场景跳过请参照 initStoryHint。
+    initStoryHint(Boolean(hashBridgeId));
     byId("bridge-list").setAttribute("aria-busy", "false");
     status.hidden = true;
   } catch (error) {
@@ -471,12 +473,11 @@ function renderBridgeList() {
 }
 
 function renderStoryPanel(bridgeId: string) {
-  const panel = byId("story-panel");
   const bridge = state.bridges.find((item) => item.properties.id === bridgeId);
   const story = state.stories.find((item) => item.bridgeId === bridgeId);
 
   if (!bridge || !story) {
-    panel.innerHTML = `
+    byId("story-panel-content").innerHTML = `
       <p class="section-label">当前点位</p>
       <h2>暂无故事卡片</h2>
       <p>该点位仍在资料整理中。</p>
@@ -520,27 +521,24 @@ function renderStoryPanel(bridgeId: string) {
       </section>`
     : "";
 
-  // 移动端（≤980px）默认折叠：仅一桥一问核心 + 证据可见；其余区块进入
-  // .story-collapsible，由「展开全文」按钮切换（桌面端始终完整展示，
-  // 按钮经 CSS 隐藏，参见 global.css）。
-  const collapsibleMarkup = `
-    <div class="story-collapsible">
-      <section class="story-section">
-        <h3>调研分析</h3>
-        ${analysisMarkup}
-      </section>
-      ${institutionMarkup}
-      <section class="story-section">
-        <h3>思政连接</h3>
-        <p>${escapeHtml(story.ideologicalLink)}</p>
-      </section>
-      <ul class="source-row" aria-label="资料来源">
-        ${sources.map((source) => `<li><span class="source-chip">${escapeHtml(source.title)}</span></li>`).join("")}
-      </ul>
-    </div>
+  // 弹窗内容区（面板首行 bar 为静态结构，不随渲染重建）。
+  const fullContentMarkup = `
+    <section class="story-section">
+      <h3>调研分析</h3>
+      ${analysisMarkup}
+    </section>
+    ${institutionMarkup}
+    <section class="story-section">
+      <h3>思政连接</h3>
+      <p>${escapeHtml(story.ideologicalLink)}</p>
+    </section>
+    <ul class="source-row" aria-label="资料来源">
+      ${sources.map((source) => `<li><span class="source-chip">${escapeHtml(source.title)}</span></li>`).join("")}
+    </ul>
   `;
 
-  panel.innerHTML = `
+  // 弹窗内容区（bar 为面板静态首行，不在每次渲染的 innerHTML 范围内）。
+  byId("story-panel-content").innerHTML = `
     <p class="section-label">当前点位 · ${escapeHtml(bridge.properties.river)} · ${bridge.properties.openedYear}</p>
     <h2>${escapeHtml(bridge.properties.name)}</h2>
     <ul class="tag-row" aria-label="主题标签">
@@ -553,36 +551,12 @@ function renderStoryPanel(bridgeId: string) {
       ${quoteMarkup}
     </section>
     ${evidenceMarkup}
-    ${collapsibleMarkup}
-    <button class="story-panel-toggle" type="button" aria-expanded="false" aria-controls="story-collapsible">
-      <span class="story-panel-label"></span>
-      <span class="story-panel-chevron" aria-hidden="true"></span>
-    </button>
+    ${fullContentMarkup}
   `;
 
-  bindStoryPanelToggle(panel, bridgeId);
-}
-
-/** 移动端「展开全文」状态：逐桥会话内记忆，新桥默认折叠。 */
-const storyExpandMemory = new Map<string, boolean>();
-
-function bindStoryPanelToggle(panel: HTMLElement, bridgeId: string) {
-  const button = panel.querySelector<HTMLButtonElement>(".story-panel-toggle");
-  if (!button) return;
-  const label = button.querySelector<HTMLElement>(".story-panel-label");
-  if (!label) return;
-
-  const apply = (view: ReturnType<typeof resolveStoryToggleView>) => {
-    panel.classList.toggle(STORY_PANEL_EXPANDED_CLASS, view.expanded);
-    button.setAttribute("aria-expanded", view.ariaExpanded);
-    label.textContent = view.label;
-  };
-
-  apply(resolveStoryToggleView(storyExpandMemory, bridgeId));
-
-  button.addEventListener("click", () => {
-    apply(toggleStoryView(storyExpandMemory, bridgeId));
-  });
+  // 弹窗顶部条的上下文胶囊（桌面端该条不显示，更新无副作用）。
+  const contextChip = byId("story-modal-context");
+  contextChip.textContent = `当前点位 · ${bridge.properties.name}`;
 }
 
 function selectBridge(bridgeId: string, moveMap: boolean) {
@@ -600,16 +574,16 @@ function selectBridge(bridgeId: string, moveMap: boolean) {
 
     const savedScroll = storyScrollMemory.get(bridgeId);
     if (savedScroll === undefined) {
-      // 首次查看：快速平滑回顶；同桥点击不触发（见下方同一分支）。
+      // 首次查看：面板快速平滑回顶；同桥点击不触发（见下方同一分支）。
       requestAnimationFrame(() => scrollStoryToTop());
     } else {
       // 切回已读过的桥：瞬时恢复进度，避免视觉跳变。
       requestAnimationFrame(() => restoreStoryScroll(savedScroll));
     }
-
-    // 深链写回：URL 与当前选中桥保持同步，但不产生历史记录。
-    window.history?.replaceState(null, "", buildBridgeHash(bridgeId));
   }
+
+  // 移动端（≤980px）：点桥即打开故事卡弹窗（同桥重开=重弹；桌面端从不弹窗）。
+  openStoryModal();
 
   if (!moveMap || !state.map) return;
 
@@ -628,7 +602,7 @@ function getStoryScrollMetrics(): StoryScrollMetrics {
   return {
     viewportWidth: window.innerWidth,
     panelScrollTop: panel.scrollTop,
-    panelOffsetTop: getStoryPanelOffsetTop(panel.getBoundingClientRect().top, window.scrollY),
+    panelOffsetTop: Math.max(0, panel.getBoundingClientRect().top + window.scrollY),
     panelScrollHeight: panel.scrollHeight,
     panelClientHeight: panel.clientHeight,
   };
@@ -637,21 +611,13 @@ function getStoryScrollMetrics(): StoryScrollMetrics {
 function restoreStoryScroll(memory: number) {
   const metrics = getStoryScrollMetrics();
   const panel = byId("story-panel");
-  // 进度记忆始终是面板相对值（折叠/展开态均有效）。
+  // 进度记忆始终是面板相对值（桌面左栏面板与移动端弹窗共用同一语义）。
   panel.scrollTop = clampStoryScroll(metrics, memory);
-  if (metrics.viewportWidth < STORY_SCROLL_BREAKPOINT) {
-    // 移动端：面板顶对齐视口，保证阅读位置可见。
-    window.scrollTo(0, metrics.panelOffsetTop);
-  }
 }
 
 function scrollStoryToTop() {
-  const metrics = getStoryScrollMetrics();
   const panel = byId("story-panel");
   animateScroll(panel, panel.scrollTop, 0, STORY_SCROLL_DURATION);
-  if (metrics.viewportWidth < STORY_SCROLL_BREAKPOINT) {
-    animateWindowScroll(window.scrollY, metrics.panelOffsetTop, STORY_SCROLL_DURATION);
-  }
 }
 
 function animateScroll(element: HTMLElement, from: number, to: number, duration: number) {
@@ -669,23 +635,87 @@ function animateScroll(element: HTMLElement, from: number, to: number, duration:
   requestAnimationFrame(step);
 }
 
-function animateWindowScroll(from: number, to: number, duration: number) {
-  if (prefersReducedMotion() || from === to) {
-    window.scrollTo(0, to);
-    return;
-  }
-
-  const start = performance.now();
-  const step = (now: number) => {
-    const progress = Math.min(1, (now - start) / duration);
-    window.scrollTo(0, from + (to - from) * easeOutCubic(progress));
-    if (progress < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-
 function easeOutCubic(progress: number): number {
   return 1 - Math.pow(1 - progress, 3);
+}
+
+/** 移动端故事卡弹窗（近全屏）：开合、焦点、ESC、断点复位。 */
+const MOBILE_STORY_QUERY = "(max-width: 980px)";
+
+let storyModalReturnFocus: HTMLElement | null = null;
+
+function openStoryModal() {
+  const panel = byId("story-panel");
+  if (panel.classList.contains("is-open")) return;
+
+  storyModalReturnFocus =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  panel.classList.add("is-open");
+  // body class 仅用于显示背景拦截层与地图模糊（不锁滚动——实测 body
+  // overflow:hidden 会摧毁窗口滚动位置：打开瞬间 scrollY 归零且解锁不恢复）。
+  document.body.classList.add("story-modal-open");
+  // 用户已点桥（=已理解机制），首次引导提示随即消失。
+  byId("story-hint").hidden = true;
+  // 打开时聚焦顶部条关闭按钮（键盘/读屏可达），preventScroll 防止焦点滚动。
+  byId("story-modal-close").focus({ preventScroll: true });
+}
+
+function closeStoryModal() {
+  const panel = byId("story-panel");
+  if (!panel.classList.contains("is-open")) return;
+
+  panel.classList.remove("is-open");
+  document.body.classList.remove("story-modal-open");
+  const back = storyModalReturnFocus;
+  storyModalReturnFocus = null;
+  // 焦点还给触发源但禁止浏览器滚动——关闭后视口即"打开前位置"，零干预。
+  if (back && back.isConnected) back.focus({ preventScroll: true });
+}
+
+/** 一次性深链：弹窗直达后立即清除 URL hash（刷新/切桥永不重复弹窗）。 */
+function clearBridgeHash() {
+  window.history?.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
+function bindStoryModal() {
+  // 顶部条整条可点关闭（按钮点击冒泡命中同一监听）；背景层点击同样关闭。
+  byId("story-modal-bar").addEventListener("click", closeStoryModal);
+  const backdrop = byId("story-modal-backdrop");
+  backdrop.addEventListener("click", closeStoryModal);
+  // 背景滚轮不穿透（桌面窄窗/触控板场景；触摸由 touch-action: none 拦截）。
+  backdrop.addEventListener("wheel", (event) => event.preventDefault(), { passive: false });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeStoryModal();
+  });
+
+  // 断点切换（旋转/跨 981px 调整窗口）：离开移动端即复位弹窗，避免 fixed 残留。
+  const mobile = window.matchMedia(MOBILE_STORY_QUERY);
+  mobile.addEventListener("change", (event) => {
+    if (!event.matches) closeStoryModal();
+  });
+}
+
+/** 首次引导提示（故事卡可发现性）：会话级一次；深链进入（已示范）则跳过。 */
+const STORY_HINT_KEY = "wuhan-bridge-map-story-hint-shown";
+
+function initStoryHint(skip: boolean) {
+  if (skip) return;
+  const hint = byId("story-hint");
+  try {
+    if (sessionStorage.getItem(STORY_HINT_KEY) === "1") return;
+    sessionStorage.setItem(STORY_HINT_KEY, "1");
+  } catch {
+    /* 隐私模式/存储不可用：本次照常提示 */
+  }
+
+  hint.hidden = false;
+  byId("story-hint-close").addEventListener("click", () => {
+    hint.hidden = true;
+  });
+  window.setTimeout(() => {
+    hint.hidden = true;
+  }, 8000);
 }
 
 function prefersReducedMotion(): boolean {

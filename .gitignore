@@ -1,16 +1,23 @@
+# 依赖与构建产物
 node_modules/
 dist/
 .astro/
+
+# 本地工具与缓存（探查脚本/截图/会话产物一律不进库）
 .wrangler/
 .superpowers/
-.env
-.env.*
-private-data/
+.npm-cache/
 .playwright-mcp/
 .playwright-cli/
 .pw-session/
-.npm-cache/
 output/
+
+# 环境与敏感
+.env
+.env.*
+private-data/
+
+# 临时截图与日志
 /current-8788.png
 wuhan-map-*.png
 npm-debug.log*
