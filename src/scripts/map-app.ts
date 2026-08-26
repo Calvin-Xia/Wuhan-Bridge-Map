@@ -16,6 +16,7 @@ import {
 import { createBridgeListMarkup, getBridgeSelectionAttributes } from "../lib/bridge-list-presentation";
 import { BRIDGE_CHAIN_ROUTE_ID } from "../lib/bridge-chain";
 import { parseBridgeHash } from "../lib/bridge-hash";
+import { displayInstitutionLabel } from "../lib/story-label";
 import {
   DATA_CENTER,
   clampCenterToViewport,
@@ -513,7 +514,10 @@ function renderStoryPanel(bridgeId: string) {
         ${
           story.institutionNote.quote
             ? `<blockquote class="quote quote--institution">${escapeHtml(story.institutionNote.quote)}${
-                story.institutionNote.quoteLabel ? `<cite>${escapeHtml(story.institutionNote.quoteLabel)}</cite>` : ""
+                (() => {
+                  const label = displayInstitutionLabel(story.institutionNote.quoteLabel ?? "");
+                  return label ? `<cite>${escapeHtml(label)}</cite>` : "";
+                })()
               }</blockquote>`
             : ""
         }

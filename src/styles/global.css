@@ -1073,7 +1073,7 @@ body.story-modal-open .map-canvas {
 }
 
 .voice-group h3 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.85rem;
   color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 700;
@@ -1094,6 +1094,7 @@ body.story-modal-open .map-canvas {
 
 .voice-item:first-child {
   border-block-start: 0;
+  padding-block-start: 0.1rem;
 }
 
 .voice-quote {
@@ -1107,15 +1108,22 @@ body.story-modal-open .map-canvas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
-  margin: 0.5rem 0 0;
-  color: var(--text-tertiary);
+  margin: 0 0 0.35rem;
   font-size: 0.76rem;
   line-height: 1.5;
 }
 
 .voice-meta b {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding-inline: 0.55rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
   color: var(--accent-hover);
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .voice-note {
@@ -1127,6 +1135,24 @@ body.story-modal-open .map-canvas {
 
 .voice-item[hidden] {
   display: none;
+}
+
+.voice-topic {
+  list-style: none;
+}
+
+.voice-topic + .voice-topic {
+  margin-block-start: 0.5rem;
+}
+
+.voice-topic[hidden] {
+  display: none;
+}
+
+.voice-topic-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .voice-expand {
@@ -1202,6 +1228,15 @@ body.story-modal-open .map-canvas {
   list-style: none;
 }
 
+.governance-subheading {
+  margin: clamp(1.75rem, 3.5vw, 2.5rem) 0 0;
+}
+
+.governance-subheading + .governance-stat-groups,
+.governance-subheading + .governance-quotes {
+  margin-block-start: 1rem;
+}
+
 .governance-group {
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
@@ -1260,12 +1295,6 @@ body.story-modal-open .map-canvas {
   color: var(--text);
   font-size: 0.84rem;
   line-height: 1.6;
-}
-
-.governance-stat-source {
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
-  line-height: 1.5;
 }
 
 .governance-quotes {

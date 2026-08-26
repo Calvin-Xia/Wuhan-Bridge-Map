@@ -1,4 +1,6 @@
 import type { GovernanceQuote, GovernanceRecord, GovernanceStatGroup } from "../lib/data-validation";
+import { stripTrailingPeriod } from "../lib/final-period";
+import { DESKTOP_COLLAPSE_QUERY, resolveCollapseState } from "../lib/responsive-collapse";
 
 const DEFAULT_VISIBLE_STAT_GROUPS = 2;
 const DEFAULT_VISIBLE_QUOTES = 2;
@@ -22,14 +24,8 @@ async function initGovernance() {
     renderDisclaimers(disclaimers, governance.disclaimers);
 
     // 数据卡与引语各自默认收起一部分,双向切换;口径说明始终可见。
-    bindCollapseToggle(statGroups, ".governance-group", DEFAULT_VISIBLE_STAT_GROUPS, {
-      expand: (rest) => `展开其余 ${rest} 组数据`,
-      collapse: (rest) => `收起其余 ${rest} 组数据`,
-    });
-    bindCollapseToggle(quotes, ".governance-quote", DEFAULT_VISIBLE_QUOTES, {
-      expand: (rest) => `展开其余 ${rest} 条引语`,
-      collapse: (rest) => `收起其余 ${rest} 条引语`,
-    });
+    bindCollapseToggle(statGroups, ".governance-group", DEFAULT_VISIBLE_STAT_GROUPS);
+    bindCollapseToggle(quotes, ".governance-quote", DEFAULT_VISIBLE_QUOTES);
 
     statGroups.setAttribute("aria-busy", "false");
     quotes.setAttribute("aria-busy", "false");
@@ -54,7 +50,6 @@ function renderStatGroups(container: HTMLElement, groups: GovernanceStatGroup[])
                     <span class="governance-stat-value">${escapeHtml(item.value)}</span>
                     <span class="governance-stat-body">
                       <span class="governance-stat-label">${escapeHtml(item.label)}</span>
-                      <span class="governance-stat-source">${escapeHtml(item.source)}</span>
                     </span>
                   </li>`,
               )
@@ -70,8 +65,8 @@ function renderQuotes(container: HTMLElement, quotes: GovernanceQuote[]) {
     .map(
       (quote) => `
         <li class="governance-quote">
-          <blockquote class="quote quote--institution">${escapeHtml(quote.text)}<cite>${escapeHtml(quote.cite)}</cite></blockquote>
-          ${quote.note ? `<p class="governance-note">${escapeHtml(quote.note)}</p>` : ""}
+          <blockquote class="quote quote--institution">${escapeHtml(stripTrailingPeriod(quote.text))}</blockquote>
+          ${quote.note ? `<p class="governance-note">${escapeHtml(stripTrailingPeriod(quote.note))}</p>` : ""}
         </li>`,
     )
     .join("");
@@ -85,43 +80,56 @@ function renderDisclaimers(container: HTMLElement, disclaimers: string[]) {
  * Attach a two-way collapse toggle to a list: the first `visibleCount`
  * items stay visible, the rest are hidden until expanded.
  */
-function bindCollapseToggle(
-  list: HTMLElement,
-  itemSelector: string,
-  visibleCount: number,
-  labels: { expand: (rest: number) => string; collapse: (rest: number) => string },
-) {
+function bindCollapseToggle(list: HTMLElement, itemSelector: string, collapsedCount: number) {
   const items = Array.from(list.children).filter(
     (element): element is HTMLElement => element.matches(itemSelector),
   );
-  const rest = items.slice(visibleCount);
-  if (rest.length === 0) return;
-
-  const toggleItem = document.createElement("li");
-  toggleItem.className = "voice-expand";
-
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "voice-expand-toggle";
-  button.setAttribute("aria-expanded", "false");
-
+  const desktop = window.matchMedia(DESKTOP_COLLAPSE_QUERY);
+  let toggleItem: HTMLLIElement | null = null;
+  let button: HTMLButtonElement | null = null;
   let expanded = false;
-  const update = () => {
+
+  const apply = () => {
+    const visibleCount = resolveCollapseState(desktop.matches, collapsedCount).visibleCount;
+    if (visibleCount === null) {
+      // 桌面：恒全展开，折叠按钮不渲染。
+      for (const item of items) item.hidden = false;
+      toggleItem?.remove();
+      toggleItem = null;
+      button = null;
+      return;
+    }
+    // 移动端：探头式收起 + 按钮（首次或断点翻转时创建）。
+    if (!toggleItem) {
+      toggleItem = document.createElement("li");
+      toggleItem.className = "voice-expand";
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "voice-expand-toggle";
+      button.addEventListener("click", () => {
+        expanded = !expanded;
+        apply();
+      });
+      toggleItem.appendChild(button);
+      list.appendChild(toggleItem);
+    }
+    const rest = items.slice(visibleCount);
     rest.forEach((item) => {
       item.hidden = !expanded;
     });
-    button.textContent = expanded ? labels.collapse(rest.length) : labels.expand(rest.length);
-    button.setAttribute("aria-expanded", String(expanded));
+    if (button) {
+      button.textContent = expanded ? "收起" : "展开";
+      button.setAttribute("aria-expanded", String(expanded));
+    }
   };
 
-  button.addEventListener("click", () => {
-    expanded = !expanded;
-    update();
+  // 断点翻转即重置默认（移动端手动展开不跨断点记忆）。
+  desktop.addEventListener("change", () => {
+    expanded = false;
+    apply();
   });
 
-  toggleItem.appendChild(button);
-  list.appendChild(toggleItem);
-  update();
+  apply();
 }
 
 async function fetchJson<T>(path: string): Promise<T> {

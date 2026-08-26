@@ -121,11 +121,13 @@ describe("dashboard interface contract", () => {
     expect(page).toContain('aria-label="治理侧记"');
     expect(page).toContain('id="section-governance"');
     expect(page).toContain('id="governance-intro"');
+    expect(page).toContain("数字里的日常");
+    expect(page).toContain("负责人这样说");
     expect(page).toContain('id="governance-stat-groups"');
     expect(page).toContain('id="governance-quotes"');
     expect(page).toContain('id="governance-disclaimers"');
     expect(styles).toContain(".governance-stat-value");
-    expect(styles).toContain(".governance-stat-source");
+    expect(styles).toContain(".governance-stat-label");
     expect(styles).toContain(".quote--institution");
     expect(styles).toContain(".governance-disclaimers");
   });
@@ -159,7 +161,7 @@ describe("dashboard interface contract", () => {
   it("declares accessible touch targets and small-text sizes", () => {
     expect(styles).toMatch(/\.voice-expand-toggle\s*\{[^}]*min-height: 2\.75rem/);
     expect(styles).toMatch(/\.map-legend-title\s*\{[^}]*font-size: 0\.75rem/);
-    expect(styles).toMatch(/\.governance-stat-source\s*\{[^}]*font-size: 0\.75rem/);
+    expect(styles).toMatch(/\.governance-stat-label\s*\{[^}]*font-size: 0\.84rem/);
     expect(styles).toContain("--text-secondary: #56645e");
     expect(styles).toContain("--text-tertiary: #586660");
   });

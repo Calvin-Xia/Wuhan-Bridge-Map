@@ -29,9 +29,9 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 
 - 数据字段以 `src/lib/data-validation.ts` 为准；**改 schema 必须同步**：`scripts/validate-data.ts`、`data-validation.test.ts`、相关契约测试
 - `story.analysis` 是**段落数组**，段内 `**重点**` 渲染为 `<strong>`；引用须带 `quoteLabel`，无引用用 `quoteConsent: "not-collected"`
-- `story.institutionNote`（可选）：治理与管养区块；`paragraphs` 段落数组支持 `**重点**`，含 `quote` 时 `quoteLabel` 必填
-- `governance.json`：`statGroups`（数据卡，每项带 value/label/source 口径）/ `quotes`（引语，含 cite）/ `disclaimers`（口径说明）
-- 路桥中心数据口径：访谈记录 878 座/829 座接入平台与工作总结 826 座全覆盖在**治理侧记数据卡内并存标注**（label 内联"与工作总结口径并存"，禁止合并）；朱家河 20 吨/白沙洲 30 吨为历史限载案例（仅故事卡内出现，含"不代表 2026 年现行限值"括号）；页脚口径说明自 2026-08-25 起只保留"调研单位材料、不公开原始记录全文"一条
+- `story.institutionNote`（可选）：治理与管养区块；`paragraphs` 段落数组支持 `**重点**`，含 `quote` 时 `quoteLabel` 必填（2026-08 溯源降噪：段落不再逐段标注「据 2025 年工作总结」「根据访谈纸质记录整理」——来源由卡底 source-row 胶囊锚定；quoteLabel 经 `src/lib/story-label.ts` 的 `displayInstitutionLabel` 剥冗余前缀，空则不渲染 cite）
+- `governance.json`：`statGroups`（数据卡，每项带 value/label/source 口径）/ `quotes`（引语，含 cite）/ `disclaimers`（口径说明）——2026-08 溯源降噪：数据卡 `source` 行、intro 来源声明、引语 `cite` 不再渲染（来源由页脚口径说明承担；cite 字段数据仍保留——契约），引语 note 已去访谈时间戳（R1 00:42 式，数据层直删）；829 卡 label 内联"与工作总结口径并存"禁止合并
+- 路桥中心数据口径：访谈记录 878 座/829 座接入平台与工作总结 826 座全覆盖在**治理侧记数据卡内并存标注**（label 内联"与工作总结口径并存"，禁止合并）；朱家河 20 吨/白沙洲 30 吨为历史限载案例（仅故事卡内出现；2026-08 决策：引语标签只注「（历史案例）」，不再含"不代表 2026 年现行限值"括号）；页脚口径说明自 2026-08-25 起只保留"调研单位材料、不公开原始记录全文"一条
 - 深度链接：`#bridge-<id>` 为**一次性入口**——初载解析后弹出/选中该桥并 `history.replaceState` **清除 hash**；切桥**不再写回** hash（URL 不随选中桥变化），刷新/切桥永不重复弹窗；页头导航用 `#section-map` / `#section-evidence` / `#section-voices` / `#section-governance`（`src/lib/bridge-hash.ts`）
 - 指标口径：指标卡"类证据 5"= 公开资料 · 问卷封闭题 · 问卷开放题（市民之声为其呈现形式）· 团队实地记录 · 机构访谈，与 sources.json 的 type 字段（4 类）有意不同，勿按字段数改
 - 路线属性含 `group`/`date`/`sampleCount`；串联线坐标必须逐一等于桥心（`bridge-chain.ts` 校验）
@@ -61,6 +61,6 @@ Astro 7（静态输出）· TypeScript · Tailwind CSS 4（`@tailwindcss/vite` �
 - 深链与导航：`#bridge-<id>` 一次性深链（初载选中桥并**弹出故事卡**（全端）、`flyToBridge` 单段推入在后台完成，随后 `replaceState` 清 hash——刷新/切桥永不重复弹窗，URL 不随选中桥变化）、页头 4 个章节锚点（平滑滚动，尊重 reduced-motion）；"类证据 5"指标卡已加形态说明
 - 故事卡交互（2026-08-26 弹窗统一后）：切桥快速平滑回顶（`prefers-reduced-motion` 时瞬时），每桥进度会话内记忆（面板内滚动，`src/lib/story-scroll.ts` 面板相对值语义，桌面移动共用）；点桥（目录/地图点/深链/图例路线）即自动弹窗，同桥点击=弹窗未开时重开；关闭通道=顶部条按钮 / 背景层点击（背景层同时拦截背景触摸，`touch-action:none` + 滚轮 `preventDefault`，**不用 body overflow 锁**）/ ESC；打开时焦点到关闭按钮（`focus({preventScroll:true})`），关闭时焦点还给触发源（同样 preventScroll）——**关闭后视口=打开前位置，零干预零漂移**（实测 693→694→694）
 - **故事卡弹窗（2026-08-26，取代旧双态/流域布局）**：全端统一浮层，DOM 在 `</main>` 之后的 body 直属（`#story-panel` + `#story-modal-bar` + `#story-modal-backdrop`），渲染只写 `#story-panel-content`（bar 为静态首行）；「展开全文」双态（28rem/60dvh、toggle、chevron、`story-toggle.ts`）已整体退役；滚动记忆=面板相对值（桌面移动共用，`story-scroll.ts`）；面板隐藏滚动条（`scrollbar-width:none` + `::-webkit-scrollbar{display:none}`——滚动条是边框盒内独立绘制层、圆角裁不到会戳破圆角）；可发现性：首次加载底部提示条（`#story-hint`，会话级一次、8s 自动消退、深链跳过、点桥即消失）+ 目录项右缘 chevron + 选中桥「故事卡」徽标（`bridge-list-presentation.ts` 模板，注意 `.bridge-item > span:last-child` 已改为 `.bridge-item-question` 类选择器）；交互手感沿用（按压 `translateY(1px) scale(0.99)`、chevron CSS 边框绘制、`overscroll-behavior-y: contain`）
-- 尾部双列：市民之声每列默认收起至前 3 条/治理侧记默认展示 2 组数据卡 + 2 条引语，均为双向展开/收起（按钮带 `aria-expanded`），口径说明常显
+- 尾部双列：市民之声每列移动端默认收起至前 3 条/治理侧记移动端默认 2 组数据卡 + 2 条引语，均双向展开/收起（按钮带 `aria-expanded`）；**桌面端（≥981px）列表恒全展、折叠按钮不渲染**——端侧默认由 `src/lib/responsive-collapse.ts`（`DESKTOP_COLLAPSE_QUERY` 与故事卡共用 981px 分界，`resolveCollapseState`）驱动，断点翻转即重置默认（不记忆手动状态）；口径说明常显
 - `dist/` 已随高德底图替换后的最近一次 `npm run build` 更新
 - 待定项：图层开关（已评估、可做，曾暂缓；未排期）；真实步行轨迹（决定不做：未记录、难以记录，页面保留"点位间为直线示意，非实际步行路径"说明）；Google Fonts 加载偶发卡死已解决——Astro fonts 构建期下载并自托管（dist 中 100 个 woff2 子集、无 fonts.googleapis.com/gstatic 运行时引用），无需 @fontsource
